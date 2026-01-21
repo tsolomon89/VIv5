@@ -190,3 +190,68 @@ export interface SectionConfig {
     pinHeight: number;  // Sticky viewport height
     objects: SceneObject[];
 }
+
+// --- NEW DATA MODEL (v1.1) ---
+
+export type EntityType = "brand" | "product" | "feature" | "solution" | "useCase";
+
+export type PageContext = {
+  kind: "detail" | "index";
+};
+
+export type PageSubject = {
+  target: EntityType;
+  cardinality: "one" | "many";
+};
+
+export type Binding =
+  | { kind: "self" }
+  | {
+      kind: "related";
+      target: EntityType;
+      cardinality: "one" | "many";
+      relationKey?: string;
+      scope?: {
+        limit?: number;
+        sort?: string;
+        filter?: Record<string, unknown>;
+      };
+    };
+
+export type Placement = {
+  slot: "start" | "end" | "free";
+  order?: number; // only meaningful when slot === "free"
+};
+
+export type BindingSignature =
+  | { kind: "self" }
+  | { kind: "related"; target: EntityType; cardinality: "one" | "many"; relationKey?: string };
+
+// Re-using ConfigState as the visual config payload for now.
+export type SectionVisualConfig = ConfigState; 
+
+export type PresentationPreset = {
+  key: string;
+  signature: BindingSignature;
+  config: Partial<SectionVisualConfig>; // Presets might not specify everything
+};
+
+export type SectionInstance = {
+  schemaVersion: 1;
+  id: string;
+  placement: Placement;
+  binding: Binding;
+  presentationKey: string;
+  overrides?: Partial<SectionVisualConfig>;
+};
+
+export type PageTemplate = {
+  schemaVersion: 1;
+  id: string;
+  name: string;
+  pageContext: PageContext;
+  pageSubject: PageSubject;
+  sections: SectionInstance[];
+};
+
+export type PresetRegistry = Record<string, PresentationPreset>;

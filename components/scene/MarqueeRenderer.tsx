@@ -1,7 +1,9 @@
+
 import React, { useEffect, useRef, useMemo } from 'react';
 import { Renderer, Program, Mesh, Texture, Geometry, Color } from 'ogl';
 import { SceneObject, NumberParam } from '../../types';
 import { trackContext, trackRaf } from '../../utils/performance';
+import { useVisibility } from '../../hooks/useVisibility';
 
 // --- Shader Definitions ---
 
@@ -123,6 +125,13 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
     const colorHelper = useRef(new Color()); // Reusable color object to avoid GC
     const itemStateRef = useRef<Map<string, { scale: number, grayscale: number }>>(new Map());
     
+    // Config: bufferPx for overscan
+    const bufferPx = getVal(listObject.bufferPx, 0, 200); // Default 200px overscan
+    const isVisible = useVisibility({ 
+        ref: containerRef, 
+        rootMargin: `${bufferPx}px 0px ${bufferPx}px 0px` 
+    });
+
     // Stable ref for scrollProgress to avoid re-initializing WebGL on scroll
     const progressRef = useRef(scrollProgress);
     useEffect(() => { progressRef.current = scrollProgress; }, [scrollProgress]);
@@ -247,7 +256,6 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
         // --- State ---
         let rafId = 0;
         let scrollOffset = 0;
-        let isVisible = false;
         let isPaused = false;
         let lastTime = performance.now();
 
@@ -437,20 +445,6 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
             }
         };
 
-        const observer = new IntersectionObserver((entries) => {
-             const wasVisible = isVisible;
-             isVisible = entries[0].isIntersecting;
-             if (!wasVisible && isVisible) {
-                 lastTime = performance.now();
-                 cancelAnimationFrame(rafId);
-                 rafId = requestAnimationFrame(render);
-                 trackRaf(1);
-             } else if (!isVisible) {
-                 trackRaf(-1);
-             }
-        }, { rootMargin: '50% 0px 50% 0px' }); 
-        
-        observer.observe(container);
         window.addEventListener('resize', updateLayout);
         updateLayout();
         
@@ -460,7 +454,6 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
         return () => {
             cancelAnimationFrame(rafId);
             window.removeEventListener('resize', updateLayout);
-            observer.disconnect();
             
             container.removeEventListener('mousemove', onMove);
             container.removeEventListener('mouseleave', onLeave);
@@ -470,7 +463,7 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
             trackContext(-1);
             trackRaf(-1);
         };
-    }, [listObject.id, flattenedItems]); 
+    }, [listObject.id, flattenedItems, isVisible]); // Dependencies updated
 
     return <div ref={containerRef} className="w-full h-full relative pointer-events-auto" />;
 };

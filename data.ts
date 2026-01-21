@@ -1,4 +1,5 @@
-import { ConfigState, NumberParam, SceneObject, SectionConfig } from './types';
+
+import { ConfigState, NumberParam, SceneObject, SectionConfig, PageTemplate } from './types';
 
 // --- Content Data ---
 export const projects = [
@@ -87,13 +88,13 @@ export const DEFAULT_CONFIG: ConfigState = {
   boltGlow: mkParam(1.0),
   
   // Tile Defaults
-  tileHeading: 'Heading',
-  tileLabel: 'Label',
-  tileSubtitle: 'Subtitle',
+  tileHeading: '',
+  tileLabel: '',
+  tileSubtitle: '',
   tileTrailing: '',
   tileTrailingIcon: '',
   tileAlign: 'center',
-  tileTag: 'h1',
+  tileTag: 'div',
   
   // Leading Model (New)
   leadingPlacement: 'none',
@@ -309,8 +310,6 @@ export const getUseCasesObjects = (): SceneObject[] => [
 ];
 
 export const getProductsObjects = (): SceneObject[] => {
-  // Use unique set of images (6 items)
-  // The renderer handles endless loop tiling
   const overrides = sliderImages.map((src) => ({
       textureUrl: src
   }));
@@ -318,52 +317,293 @@ export const getProductsObjects = (): SceneObject[] => {
   return [createObj({
       shape: 'list',
       listLayout: 'marquee',
-      
-      // Speed matching 30s CSS animation for ~5000px width => ~170px/s
-      // Render engine uses (speed * 60) px/s. 2.8 * 60 = 168.
       listSpeed: mkParam(2.8), 
-      listDirection: mkParam(-1.0), // Move Left
-      listGap: mkParam(32), // md:gap-8 (32px)
+      listDirection: mkParam(-1.0),
+      listGap: mkParam(32),
       clipWithinSection: true,
       offsetY: mkParam(0),
       marqueeHoverPause: true, 
-      
-      // Fine-grained Hover Effects
       itemHoverScale: mkParam(1.05),
-      itemBaseGrayscale: mkParam(1.0), // Start grayscale
-      itemHoverGrayscale: mkParam(0.0), // Hover color
+      itemBaseGrayscale: mkParam(1.0),
+      itemHoverGrayscale: mkParam(0.0),
       listSmoothness: mkParam(0.1),
-      
-      // Exact Pattern from Reference:
-      // 0: rounded-tl-[100px] -> 100px 0 0 0
-      // 1: rounded-tr-[100px] rounded-bl-[40px] -> 0 100px 0 40px
-      // 2: rounded-[40px] -> 40px
       listRadiusPattern: '100px 0 0 0 | 0 100px 0 40px | 40px',
-
       listTemplate: {
           shape: 'card',
-          // Desktop Sizes (Reference: w-[400px] h-[560px])
-          // MarqueeRenderer handles mobile responsive override (280x400) automatically
           cardWidth: mkParam(400),
           cardHeight: mkParam(560),
           cardBackground: '#ffffff',
           cardElevation: mkParam(0),
           sizingMode: 'cover',
-          cardRadius: '0px' // Overridden by pattern
+          cardRadius: '0px'
       },
       listItems: overrides
   })];
 };
 
-export const getFeaturesObjects = (): SceneObject[] => {
-    return []; 
-};
+export const getFeaturesObjects = (): SceneObject[] => [
+    // Header
+    createObj({
+        shape: 'tile',
+        offsetY: mkParam(-400),
+        offsetX: mkParam(-200), // Left align roughly
+        tileAlign: 'left',
+        tileHeading: 'Latest Projects.',
+        tileTag: 'h2',
+        headingSize: mkParam(64),
+        headingColor: '#000000',
+        tileTrailing: '( _04 )'
+    }),
+    // Grid
+    createObj({
+        shape: 'list',
+        listLayout: 'grid',
+        listColumns: mkParam(2),
+        listGap: mkParam(48), // gap-12
+        listCount: mkParam(4),
+        offsetY: mkParam(100),
+        listTemplate: {
+            shape: 'card',
+            cardWidth: mkParam(500),
+            cardHeight: mkParam(450), // Aspect 4/3 ish
+            cardBackground: '#f5f5f5', // neutral-100
+            cardRadius: '4px',
+            tileTag: 'h3',
+            headingSize: mkParam(24),
+            headingColor: '#000000',
+            subColor: '#737373', // neutral-500
+            cardMediaHeight: mkParam(360), // Top image area
+            cardMediaFit: 'cover',
+            cardPadding: mkParam(0),
+            tileAlign: 'left',
+            animationType: 'static'
+        },
+        listItems: projects.map(p => ({
+            cardMediaSrc: p.image,
+            tileHeading: p.title,
+            tileSubtitle: p.category,
+            tileTrailing: p.year
+        }))
+    })
+];
+
+export const getSolutionsObjects = (): SceneObject[] => [
+    // Header
+    createObj({
+        shape: 'tile',
+        offsetY: mkParam(-400),
+        tileAlign: 'left',
+        tileLabel: '/ SERVICES',
+        labelColor: '#a3a3a3', // neutral-400
+        tileHeading: 'Our Expertise.',
+        headingSize: mkParam(60),
+        headingColor: '#000000',
+        tileSubtitle: 'We combine strategic thinking with design excellence to create brands that stand out in a crowded digital landscape.',
+        subColor: '#737373',
+        subSize: mkParam(16)
+    }),
+    // Services Grid
+    createObj({
+        shape: 'list',
+        listLayout: 'grid',
+        listColumns: mkParam(3),
+        listGap: mkParam(32),
+        offsetY: mkParam(100),
+        listTemplate: {
+            shape: 'card',
+            cardWidth: mkParam(350),
+            cardHeight: mkParam(350),
+            cardBackground: '#ffffff',
+            cardBorder: '1px solid rgba(0,0,0,0.05)',
+            cardRadius: '16px',
+            cardPadding: mkParam(32),
+            cardElevation: mkParam(1),
+            // Leading Icon Styling
+            leadingPlacement: 'above',
+            leadingKind: 'icon',
+            leadingSize: mkParam(48),
+            leadingGap: mkParam(24),
+            // Text Styling
+            tileAlign: 'left',
+            headingSize: mkParam(20),
+            headingColor: '#000000',
+            subSize: mkParam(16),
+            subColor: '#737373'
+        },
+        listItems: [
+            { 
+                leadingIcon: 'Hexagon', 
+                tileHeading: 'Brand Identity', 
+                tileSubtitle: 'Crafting distinct visual languages that resonate with your audience and stand the test of time.'
+            },
+            { 
+                leadingIcon: 'Square', 
+                tileHeading: 'Digital Products', 
+                tileSubtitle: 'Building robust, scalable web applications with cutting-edge technologies and seamless UX.'
+            },
+            { 
+                leadingIcon: 'Triangle', 
+                tileHeading: 'Motion Design', 
+                tileSubtitle: 'Bringing static interfaces to life with fluid animations and interactive 3D experiences.'
+            }
+        ]
+    })
+];
+
+export const getCTAObjects = (): SceneObject[] => [
+    // Background Globs (simulated with large soft spheres/glows)
+    createObj({
+        shape: 'sphere',
+        scale: mkParam(500), // Huge
+        opacity: mkParam(0.3),
+        glow: mkParam(2),
+        bloom: mkParam(2),
+        offsetX: mkParam(400),
+        offsetY: mkParam(-400),
+        animationType: 'rotate',
+        colorFrequency: mkParam(0.5)
+    }),
+    createObj({
+        shape: 'sphere',
+        scale: mkParam(400),
+        opacity: mkParam(0.2),
+        glow: mkParam(1.5),
+        bloom: mkParam(1),
+        offsetX: mkParam(-400),
+        offsetY: mkParam(400),
+        hueShift: mkParam(3.14),
+        animationType: 'rotate'
+    }),
+    // Content
+    createObj({
+        shape: 'tile',
+        tileAlign: 'center',
+        // "Open for new collaborations" pill simulation
+        tileLabel: '✨ Open for new collaborations',
+        labelColor: 'rgba(255,255,255,0.8)',
+        labelSize: mkParam(14),
+        
+        tileHeading: 'Ready to start?',
+        headingSize: mkParam(80),
+        headingColor: '#ffffff',
+        
+        tileSubtitle: "Let's build something extraordinary together. Reach out to discuss your next project.",
+        subColor: 'rgba(255,255,255,0.6)',
+        subSize: mkParam(20)
+    }),
+    // Button Simulation
+    createObj({
+        shape: 'card',
+        cardWidth: mkParam(200),
+        cardHeight: mkParam(60),
+        cardBackground: '#ffffff',
+        cardRadius: '30px',
+        offsetY: mkParam(200),
+        tileHeading: 'Get in touch',
+        headingColor: '#000000',
+        headingSize: mkParam(18),
+        tileAlign: 'center'
+    })
+];
 
 export const INITIAL_SECTIONS: Record<string, SectionConfig> = {
   hero: { id: 'hero', height: 1500, pinHeight: 800, objects: getHeroObjects() },
   UseCases: { id: 'UseCases', height: 1600, pinHeight: 800, objects: getUseCasesObjects() },
   Products: { id: 'Products', height: 1200, pinHeight: 800, objects: getProductsObjects() }, 
-  Features: { id: 'Features', height: 1000, pinHeight: 800, objects: [] },
-  Solutions: { id: 'Solutions', height: 1200, pinHeight: 800, objects: [] },
-  CTA: { id: 'CTA', height: 800, pinHeight: 800, objects: [] }
+  Features: { id: 'Features', height: 1400, pinHeight: 800, objects: getFeaturesObjects() },
+  Solutions: { id: 'Solutions', height: 1200, pinHeight: 800, objects: getSolutionsObjects() },
+  CTA: { id: 'CTA', height: 800, pinHeight: 800, objects: getCTAObjects() }
+};
+
+// --- INITIAL PAGE TEMPLATE (v1.1 Data Model) ---
+export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
+    schemaVersion: 1,
+    id: 'demo-landing',
+    name: 'Demo Landing Page',
+    pageContext: { kind: 'detail' }, 
+    pageSubject: { target: 'brand', cardinality: 'one' }, 
+    
+    sections: [
+        {
+            schemaVersion: 1,
+            id: 'hero-section',
+            placement: { slot: 'start' },
+            binding: { kind: 'self' },
+            presentationKey: 'self.hero.v1',
+            overrides: {} 
+        },
+        {
+            schemaVersion: 1,
+            id: 'use-cases-section',
+            placement: { slot: 'free', order: 1 },
+            binding: { kind: 'self' }, 
+            presentationKey: 'section.generic.v1',
+            overrides: {} 
+        },
+        {
+            schemaVersion: 1,
+            id: 'products-section',
+            placement: { slot: 'free', order: 2 },
+            binding: { kind: 'self' },
+            presentationKey: 'section.generic.v1',
+            overrides: {} 
+        },
+        {
+            schemaVersion: 1,
+            id: 'features-section',
+            placement: { slot: 'free', order: 3 },
+            binding: { kind: 'self' },
+            presentationKey: 'section.generic.v1',
+            overrides: {} 
+        },
+        {
+            schemaVersion: 1,
+            id: 'solutions-section',
+            placement: { slot: 'free', order: 4 },
+            binding: { kind: 'self' },
+            presentationKey: 'section.generic.v1',
+            overrides: {} 
+        },
+        {
+            schemaVersion: 1,
+            id: 'cta-section',
+            placement: { slot: 'end' },
+            binding: { kind: 'self' },
+            presentationKey: 'section.generic.v1',
+            overrides: {} 
+        }
+    ]
+};
+
+// --- MINIMAL PAGE TEMPLATE (For Switching) ---
+export const MINIMAL_PAGE_TEMPLATE: PageTemplate = {
+    schemaVersion: 1,
+    id: 'minimal-landing',
+    name: 'Minimal Landing Page',
+    pageContext: { kind: 'detail' }, 
+    pageSubject: { target: 'brand', cardinality: 'one' }, 
+    
+    sections: [
+        {
+            schemaVersion: 1,
+            id: 'hero-section',
+            placement: { slot: 'start' },
+            binding: { kind: 'self' },
+            presentationKey: 'self.hero.v1',
+            overrides: {} 
+        },
+        {
+            schemaVersion: 1,
+            id: 'cta-section',
+            placement: { slot: 'end' },
+            binding: { kind: 'self' },
+            presentationKey: 'self.cta.v1', // Using dedicated CTA preset logic if available
+            overrides: {} 
+        }
+    ]
+};
+
+export const TEMPLATES: Record<string, PageTemplate> = {
+    'demo-landing': INITIAL_PAGE_TEMPLATE,
+    'minimal-landing': MINIMAL_PAGE_TEMPLATE
 };

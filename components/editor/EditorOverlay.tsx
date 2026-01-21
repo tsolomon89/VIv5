@@ -1,9 +1,14 @@
+
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings2, ChevronDown, ChevronUp, Layers, MoveVertical, Box, Triangle, Circle, Square, Type, CloudLightning, Cloud, Trash2, Copy, PanelTop } from 'lucide-react';
+import { Settings2, ChevronDown, ChevronUp, Layers, MoveVertical, Box, Triangle, Circle, Square, Type, CloudLightning, Cloud, Trash2, Copy, PanelTop, Plus } from 'lucide-react';
 import { FpsTracker } from '../FpsTracker';
-import { ConfigControls, AddButton } from './ConfigControls';
-import { ConfigState, SceneObject, ShapeType, SectionConfig } from '../../types';
+import { ConfigControls, AddButton, SectionHeader } from './ConfigControls';
+import { BindingControls } from './BindingControls';
+import { PlacementControls } from './PlacementControls';
+import { PresentationControls } from './PresentationControls'; // New Import
+import { ConfigState, SceneObject, ShapeType, SectionConfig, PageTemplate, Binding, Placement } from '../../types';
+import { getSectionLabel, getLegacyKey } from '../../utils/resolution';
 
 interface EditorOverlayProps {
     isDebugMode: boolean;
@@ -12,11 +17,24 @@ interface EditorOverlayProps {
     sectionProgress: Record<string, number>;
     isPanelOpen: boolean;
     setIsPanelOpen: (val: boolean) => void;
-    sections: Record<string, SectionConfig>;
+    // Data Props
+    sections: Record<string, SectionConfig>; // Legacy Data Map
+    template: PageTemplate; // New Structure
+    // Methods
     viewMode: 'single' | 'multi';
     setViewMode: (mode: 'single' | 'multi') => void;
     updateSectionHeight: (h: number) => void;
     updateSectionPinHeight?: (h: number) => void;
+    
+    // Structure Updates
+    updateSectionBinding: (id: string, b: Binding) => void;
+    updateSectionPlacement: (id: string, p: Placement) => void;
+    updateSectionPresentation: (id: string, k: string) => void; 
+    
+    addSection: () => string;
+    removeSection: (id: string) => void;
+
+    // Content Updates
     singleConfig: ConfigState;
     updateSingleConfig: (k: keyof ConfigState, v: any) => void;
     addSceneObject: (shape: ShapeType) => void;
@@ -35,10 +53,16 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
     isPanelOpen,
     setIsPanelOpen,
     sections,
+    template,
     viewMode,
     setViewMode,
     updateSectionHeight,
     updateSectionPinHeight,
+    updateSectionBinding,
+    updateSectionPlacement,
+    updateSectionPresentation,
+    addSection,
+    removeSection,
     singleConfig,
     updateSingleConfig,
     addSceneObject,
@@ -48,6 +72,16 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
     removeSceneObject,
     updateSceneObject
 }) => {
+    // Helper to find current section in template
+    const currentSectionInstance = template.sections.find(s => s.id === activeSectionId);
+    // Helper to find data Key
+    const legacyKey = getLegacyKey(activeSectionId);
+    
+    const handleAddSection = () => {
+        const newId = addSection();
+        setActiveSectionId(newId);
+    };
+
     return (
       <AnimatePresence>
         {isDebugMode && (
@@ -69,28 +103,75 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
                     
                     {/* Header: Section Selector */}
                     <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0 bg-white/5">
-                        <div className="flex items-center gap-3">
-                            <div className="p-1.5 bg-white/10 rounded-lg">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="p-1.5 bg-white/10 rounded-lg shrink-0">
                               <Settings2 className="w-4 h-4 text-white" />
                             </div>
-                            <select 
-                                value={activeSectionId} 
-                                onChange={(e) => setActiveSectionId(e.target.value)}
-                                className="bg-transparent text-sm font-medium tracking-wide text-white/90 focus:outline-none cursor-pointer appearance-none uppercase"
-                            >
-                                {Object.keys(sections).map(k => <option key={k} value={k} className="text-black">{k}</option>)}
-                            </select>
-                            <ChevronDown className="w-3 h-3 text-white/50 -ml-1 pointer-events-none" />
+                            <div className="relative flex-1 min-w-0">
+                                <select 
+                                    value={activeSectionId} 
+                                    onChange={(e) => setActiveSectionId(e.target.value)}
+                                    className="w-full bg-transparent text-sm font-medium tracking-wide text-white/90 focus:outline-none cursor-pointer appearance-none uppercase truncate pr-6"
+                                >
+                                    {template.sections.map(s => (
+                                        <option key={s.id} value={s.id} className="text-black">
+                                            {getSectionLabel(s)}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-white/50 pointer-events-none" />
+                            </div>
                         </div>
-                        <button onClick={() => setIsPanelOpen(!isPanelOpen)}>
-                             {isPanelOpen ? <ChevronDown className="w-4 h-4 text-white/50" /> : <ChevronUp className="w-4 h-4 text-white/50" />}
-                        </button>
+                        <div className="flex items-center gap-2 pl-3 border-l border-white/10 ml-3">
+                            <button onClick={handleAddSection} className="p-1.5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors" title="Add Section">
+                                <Plus className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => removeSection(activeSectionId)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-white/60 hover:text-red-400 transition-colors" title="Remove Section">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => setIsPanelOpen(!isPanelOpen)} className="p-1.5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors">
+                                 {isPanelOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                            </button>
+                        </div>
                     </div>
 
                     {isPanelOpen && (
                         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-6">
+                            
+                            {/* --- BINDING, PLACEMENT & PRESENTATION (Phase E) --- */}
+                            {currentSectionInstance && (
+                                <div className="space-y-6 pb-6 border-b border-white/5">
+                                    <div>
+                                        <SectionHeader title="Semantics (Binding)" top={0} className="-mx-4 px-4 bg-transparent border-t-0" />
+                                        <BindingControls 
+                                            binding={currentSectionInstance.binding}
+                                            onChange={(b) => updateSectionBinding(activeSectionId, b)}
+                                        />
+                                    </div>
+                                    
+                                    <div>
+                                        <SectionHeader title="Visuals (Presentation)" top={0} className="-mx-4 px-4 bg-transparent border-t-0" />
+                                        <PresentationControls 
+                                            binding={currentSectionInstance.binding}
+                                            currentKey={currentSectionInstance.presentationKey}
+                                            onChange={(k) => updateSectionPresentation(activeSectionId, k)}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <SectionHeader title="Position (Placement)" top={0} className="-mx-4 px-4 bg-transparent border-t-0" />
+                                        <PlacementControls 
+                                            placement={currentSectionInstance.placement}
+                                            onChange={(p) => updateSectionPlacement(activeSectionId, p)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* --- VISUALS & CONTENT (Legacy / Override) --- */}
+                            
                             {/* Mode Toggles (Hero Only) */}
-                            {activeSectionId === 'hero' && (
+                            {activeSectionId === 'hero-section' && (
                                 <div className="flex bg-black/40 p-1 rounded-xl border border-white/10">
                                     <button 
                                         onClick={() => setViewMode('single')}
@@ -118,11 +199,11 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
                                             <MoveVertical className="w-3 h-3" />
                                             <span className="text-[10px] uppercase font-bold tracking-wider">Scroll Height</span>
                                         </div>
-                                        <span className="text-[10px]">{sections[activeSectionId].height}px</span>
+                                        <span className="text-[10px]">{sections[legacyKey]?.height}px</span>
                                     </div>
                                     <input 
                                         type="range" min="500" max={5000} step="50"
-                                        value={sections[activeSectionId].height}
+                                        value={sections[legacyKey]?.height || 1000}
                                         onChange={(e) => updateSectionHeight(Number(e.target.value))}
                                         className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
                                     />
@@ -136,11 +217,11 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
                                                 <PanelTop className="w-3 h-3" />
                                                 <span className="text-[10px] uppercase font-bold tracking-wider">Pin Height</span>
                                             </div>
-                                            <span className="text-[10px]">{sections[activeSectionId].pinHeight}px</span>
+                                            <span className="text-[10px]">{sections[legacyKey]?.pinHeight}px</span>
                                         </div>
                                         <input 
                                             type="range" min="300" max={1500} step="50"
-                                            value={sections[activeSectionId].pinHeight}
+                                            value={sections[legacyKey]?.pinHeight || 800}
                                             onChange={(e) => updateSectionPinHeight(Number(e.target.value))}
                                             className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:bg-blue-400 [&::-webkit-slider-thumb]:rounded-full"
                                         />
@@ -149,17 +230,17 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
                             </div>
 
                             {/* Single Mode Config (Hero Only) */}
-                            {viewMode === 'single' && activeSectionId === 'hero' ? (
+                            {viewMode === 'single' && activeSectionId === 'hero-section' ? (
                                 <ConfigControls config={singleConfig} onChange={updateSingleConfig} headerOffset={0} sectionHeaderClass="-mx-6 px-6" />
                             ) : (
                                 <>
                                     {/* Add Buttons */}
                                     <div className="space-y-3 p-2">
-                                         <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Add to {activeSectionId}</label>
+                                         <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Add to {legacyKey}</label>
                                          <div className="grid grid-cols-4 gap-2">
-                                            {activeSectionId === 'UseCases' ? (
+                                            {legacyKey === 'UseCases' ? (
                                                  <AddButton icon={<Type className="w-4 h-4" />} label="Text" onClick={() => addSceneObject('text')} />
-                                            ) : activeSectionId === 'Products' ? (
+                                            ) : legacyKey === 'Products' ? (
                                                  <AddButton icon={<Square className="w-4 h-4" />} label="Plane" onClick={() => addSceneObject('plane')} />
                                             ) : (
                                                 <>

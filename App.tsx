@@ -1,31 +1,40 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Components
-import { SectionScene } from './components/scene/SectionScene';
-import { SectionChapter } from './components/scene/SectionChapter';
-import { Hero } from './components/sections/Hero';
+import { PageRenderer } from './components/renderers/PageRenderer';
 import { EditorOverlay } from './components/editor/EditorOverlay';
 import { Header } from './components/layout/Header';
 import { Navigation } from './components/layout/Navigation';
-import { Footer } from './components/layout/Footer';
-import { UseCases } from './components/sections/UseCases';
-import { Products } from './components/sections/Products';
-import { Features } from './components/sections/Features';
-import { Solutions } from './components/sections/Solutions';
-import { CTA } from './components/sections/CTA';
 
-// Hooks
+// Data & Hooks
 import { useCheatCode } from './hooks/useCheatCode';
 import { useSceneManager } from './hooks/useSceneManager';
+import { useTemplateManager } from './hooks/useTemplateManager';
+import { resolveSectionData } from './utils/resolution';
 
 export default function App() {
   const { hasUnlockedDebug, isDebugMode, setIsDebugMode, flash, handleTouchStart, handleTouchEnd } = useCheatCode();
+  
+  // State Manager 1: Content (Legacy Data Map)
   const { 
       sections, singleConfig, updateSingleConfig, activeSectionId, setActiveSectionId, 
       addSceneObject, duplicateSceneObject, removeSceneObject, updateSceneObject, 
       updateSectionHeight, updateSectionPinHeight, toggleSceneObject, activeObjects 
   } = useSceneManager();
+
+  // State Manager 2: Structure (New Template)
+  const {
+      template, 
+      updateSectionBinding, 
+      updateSectionPlacement,
+      updateSectionPresentation,
+      addSection,
+      removeSection,
+      importTemplate,
+      loadTemplate
+  } = useTemplateManager();
   
   const [copySuccess, setCopySuccess] = useState(false);
   const [viewMode, setViewMode] = useState<'single' | 'multi'>('multi');
@@ -33,7 +42,15 @@ export default function App() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
-  const [sectionProgress, setSectionProgress] = useState<Record<string, number>>({ hero: 0 });
+  const [sectionProgress, setSectionProgress] = useState<Record<string, number>>({});
+
+  // Sync active section ID if it gets deleted
+  useEffect(() => {
+      const exists = template.sections.some(s => s.id === activeSectionId);
+      if (!exists && template.sections.length > 0) {
+          setActiveSectionId(template.sections[0].id);
+      }
+  }, [template.sections, activeSectionId]);
 
   // --- Scroll Logic ---
   useEffect(() => {
@@ -42,46 +59,63 @@ export default function App() {
       const vH = window.innerHeight;
       const newProgress: Record<string, number> = {};
 
-      // Hero: 0 to 1 based on its height (Standard Scroll)
-      newProgress['hero'] = Math.min(1, Math.max(0, scrollY / (sections['hero'].height || 1)));
+      // NOTE: We are iterating over the dynamic template sections now
+      template.sections.forEach(section => {
+          const key = section.id;
+          
+          // Resolve dimensions using the same logic as the renderer, passing the dynamic data map
+          const { height, pinHeight } = resolveSectionData(key, section.binding, sections);
 
-      // Other Sections: Sticky Scroll Progress
-      Object.keys(sections).forEach(key => {
-          if (key === 'hero') return;
-          const el = sectionRefs.current[key];
-          if (el) {
-              const rect = el.getBoundingClientRect();
-              
-              // Calculate effective sticky travel distance
-              const trackHeight = sections[key].height;
-              const pinHeight = sections[key].pinHeight || vH;
-              const scrollDistance = Math.max(1, trackHeight - pinHeight);
-              
-              // Sticky Progress Math:
-              // rect.top is the position of the element's top edge relative to viewport.
-              // When rect.top is > 0, we haven't reached it (progress < 0)
-              // When rect.top is 0, we are at start (progress 0)
-              // When rect.top is negative, we are scrolling inside it.
-              // When rect.top == -scrollDistance, we are at end (progress 1)
-              const scrolledPastStart = -rect.top;
-              const rawProgress = scrolledPastStart / scrollDistance;
-              
-              newProgress[key] = rawProgress;
+          if (key === 'hero-section') {
+              // Standard Scroll for Hero
+              newProgress[key] = Math.min(1, Math.max(0, scrollY / (height || 1)));
+          } else {
+              // Sticky Scroll for others
+              const el = sectionRefs.current[key];
+              if (el) {
+                  const rect = el.getBoundingClientRect();
+                  
+                  // Calculate effective sticky travel distance
+                  const trackHeight = height;
+                  const effectivePinHeight = pinHeight || vH;
+                  const scrollDistance = Math.max(1, trackHeight - effectivePinHeight);
+                  
+                  // rect.top logic
+                  const scrolledPastStart = -rect.top;
+                  const rawProgress = scrolledPastStart / scrollDistance;
+                  
+                  newProgress[key] = rawProgress;
+              }
           }
       });
       setSectionProgress(newProgress);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
+    handleScroll(); // Initial check
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [sections]);
+  }, [template, sections]); // Dependency on dynamic template & sections
 
   const handleCopyConfig = async () => {
     try {
-        await navigator.clipboard.writeText(JSON.stringify({ singleConfig, sections }, null, 2));
+        // Export the Template Structure instead of raw sections
+        await navigator.clipboard.writeText(JSON.stringify(template, null, 2));
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) { console.error(err); }
+  };
+
+  const handleImportConfig = () => {
+      const input = prompt("Paste your PageTemplate JSON here:");
+      if (input) {
+          const result = importTemplate(input);
+          if (!result.success) {
+              alert(`Import failed: ${result.error}`);
+          }
+      }
+  };
+
+  const setSectionRef = (id: string, el: HTMLElement | null) => {
+      sectionRefs.current[id] = el;
   };
 
   return (
@@ -93,95 +127,58 @@ export default function App() {
           )}
       </AnimatePresence>
 
-      <Header isNavOpen={isNavOpen} setIsNavOpen={setIsNavOpen} hasUnlockedDebug={hasUnlockedDebug} isDebugMode={isDebugMode} setIsDebugMode={setIsDebugMode} onCopyConfig={handleCopyConfig} copySuccess={copySuccess} />
+      <Header 
+        isNavOpen={isNavOpen} 
+        setIsNavOpen={setIsNavOpen} 
+        hasUnlockedDebug={hasUnlockedDebug} 
+        isDebugMode={isDebugMode} 
+        setIsDebugMode={setIsDebugMode} 
+        onCopyConfig={handleCopyConfig} 
+        onImportConfig={handleImportConfig}
+        onLoadTemplate={loadTemplate}
+        copySuccess={copySuccess} 
+      />
+      
       <Navigation isOpen={isNavOpen} />
       
-      {/* --- Main Content --- */}
+      {/* --- Main Content (Compiler Output) --- */}
       <main className="relative w-full">
-         <Hero 
-            height={sections['hero'].height}
-            objects={sections['hero'].objects}
-            progress={sectionProgress['hero'] || 0}
-         />
-         
-         {/* Main Content Container - NOTE: Removed overflow-hidden to allow sticky to work correctly */}
          <div className="relative z-20 shadow-[0_-50px_100px_rgba(0,0,0,0.5)]">
-            
-            <SectionChapter
-                id="UseCases"
-                height={sections['UseCases'].height}
-                pinHeight={sections['UseCases'].pinHeight}
-                objects={sections['UseCases'].objects}
-                progress={sectionProgress['UseCases'] || 0}
-                setRef={(el) => { sectionRefs.current['UseCases'] = el; }}
-                className="bg-white rounded-t-3xl md:rounded-t-[4rem]" // Applied here for card effect
-            >
-                <UseCases />
-            </SectionChapter>
-
-            <SectionChapter
-                id="Products"
-                height={sections['Products'].height}
-                pinHeight={sections['Products'].pinHeight}
-                objects={sections['Products'].objects}
-                progress={sectionProgress['Products'] || 0}
-                setRef={(el) => { sectionRefs.current['Products'] = el; }}
-                className="bg-white"
-            >
-                <Products />
-            </SectionChapter>
-
-            <SectionChapter
-                id="Features"
-                height={sections['Features'].height}
-                pinHeight={sections['Features'].pinHeight}
-                objects={sections['Features'].objects}
-                progress={sectionProgress['Features'] || 0}
-                setRef={(el) => { sectionRefs.current['Features'] = el; }}
-                className="bg-white"
-            >
-                <Features />
-            </SectionChapter>
-
-            <SectionChapter
-                id="Solutions"
-                height={sections['Solutions'].height}
-                pinHeight={sections['Solutions'].pinHeight}
-                objects={sections['Solutions'].objects}
-                progress={sectionProgress['Solutions'] || 0}
-                setRef={(el) => { sectionRefs.current['Solutions'] = el; }}
-                className="bg-neutral-50"
-            >
-                <Solutions />
-            </SectionChapter>
-
-            <SectionChapter
-                id="CTA"
-                height={sections['CTA'].height}
-                pinHeight={sections['CTA'].pinHeight}
-                objects={sections['CTA'].objects}
-                progress={sectionProgress['CTA'] || 0}
-                setRef={(el) => { sectionRefs.current['CTA'] = el; }}
-                className="bg-black"
-            >
-                <CTA />
-            </SectionChapter>
-
-            <Footer />
+            <PageRenderer 
+                template={template} 
+                sectionProgress={sectionProgress} 
+                setSectionRef={setSectionRef}
+                dataMap={sections}
+            />
          </div>
       </main>
 
       {/* --- Editor --- */}
       <EditorOverlay
         isDebugMode={isDebugMode}
-        activeSectionId={activeSectionId}
-        setActiveSectionId={setActiveSectionId}
+        // Active ID management
+        activeSectionId={activeSectionId.includes('-section') ? activeSectionId : `${activeSectionId}-section`} // Normalize to full ID
+        setActiveSectionId={(id) => setActiveSectionId(id)}
+        
+        // Data sources
+        sections={sections} 
+        template={template}
+        
+        // UI State
         sectionProgress={sectionProgress}
         isPanelOpen={isPanelOpen}
         setIsPanelOpen={setIsPanelOpen}
-        sections={sections}
         viewMode={viewMode}
         setViewMode={setViewMode}
+        
+        // Structure Actions
+        updateSectionBinding={updateSectionBinding}
+        updateSectionPlacement={updateSectionPlacement}
+        updateSectionPresentation={updateSectionPresentation}
+        addSection={addSection}
+        removeSection={removeSection}
+        
+        // Content Actions (Legacy Bridge)
         updateSectionHeight={updateSectionHeight}
         updateSectionPinHeight={updateSectionPinHeight}
         singleConfig={singleConfig}
