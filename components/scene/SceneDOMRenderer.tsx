@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { SceneObject, NumberParam, LeadingPlacement, LeadingKind, ConfigState } from '../../types';
 import { getIcon } from '../../utils/iconRegistry';
@@ -67,6 +68,7 @@ const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = fal
     const tileLabel = obj.tileLabel || obj.textLabel;
     const tileSubtitle = obj.tileSubtitle || obj.textSubtitle;
     const tileTrailing = obj.tileTrailing || obj.textTrailing;
+    const tileTrailingIcon = obj.tileTrailingIcon;
     
     // --- Style Construction ---
     const shadows = [
@@ -113,7 +115,10 @@ const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = fal
         const size = getVal(obj.leadingSize, scrollProgress, 40);
         const lOpacity = getVal(obj.leadingOpacity, scrollProgress, 1);
         const radius = getVal(obj.leadingRadius, scrollProgress, 0);
+        const padding = getVal(obj.leadingPadding, scrollProgress, 0);
         const fit = obj.leadingFit || 'cover';
+        const bg = obj.leadingBackground || 'transparent';
+        const color = obj.leadingColor || obj.headingColor;
         
         // Common style
         const style: React.CSSProperties = {
@@ -122,10 +127,15 @@ const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = fal
             opacity: lOpacity,
             borderRadius: radius,
             objectFit: fit as any,
+            backgroundColor: bg,
+            padding: padding,
             // Spacing
             marginBottom: placement === 'above' ? getVal(obj.leadingGap, scrollProgress, 12) : 0,
             marginRight: placement === 'left' ? getVal(obj.leadingGap, scrollProgress, 12) : 0,
-            display: 'block'
+            display: 'flex', // Centering for icons
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
         };
 
         if (kind === 'image' && obj.leadingImage) {
@@ -135,13 +145,26 @@ const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = fal
         if (kind === 'icon' && obj.leadingIcon) {
             const IconEntry = getIcon(obj.leadingIcon);
             if (IconEntry) {
-                return IconEntry.render({ 
-                    style: { ...style, color: obj.headingColor } 
-                });
+                return (
+                    <div style={style}>
+                        {IconEntry.render({ 
+                            style: { width: '100%', height: '100%', color: color } 
+                        })}
+                    </div>
+                );
             }
         }
         return null;
     };
+
+    const TrailingIconElement = () => {
+        if (!tileTrailingIcon) return null;
+        const IconEntry = getIcon(tileTrailingIcon);
+        if (IconEntry) {
+            return IconEntry.render({ className: "w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" });
+        }
+        return null;
+    }
 
     const TileContent = () => (
         <div className="w-full">
@@ -161,7 +184,7 @@ const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = fal
                 </div>
             )}
             
-            {(tileHeading || (placement === 'left' && (obj.leadingIcon || obj.leadingImage)) || tileTrailing) && (
+            {(tileHeading || (placement === 'left' && (obj.leadingIcon || obj.leadingImage)) || tileTrailing || tileTrailingIcon) && (
                  <div className={`flex items-center ${align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start'}`}>
                      {placement === 'left' && <LeadingElement />}
                      
@@ -170,15 +193,17 @@ const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = fal
                             fontSize: `${getVal(obj.headingSize, scrollProgress, 120)}px`,
                             letterSpacing: `${getVal(obj.headingSpacing, scrollProgress, -0.05)}em`,
                             lineHeight: getVal(obj.headingHeight, scrollProgress, 0.9),
-                            color: obj.headingColor
+                            color: obj.headingColor,
+                            whiteSpace: 'pre-wrap'
                         }} className="font-medium tracking-tighter">
                             {tileHeading}
                         </Tag>
                      )}
                      
-                     {tileTrailing && (
-                         <div className="flex items-center gap-2 ml-auto">
-                            <span className="text-sm font-mono opacity-50">{tileTrailing}</span>
+                     {(tileTrailing || tileTrailingIcon) && (
+                         <div className="flex items-center gap-2 ml-auto shrink-0">
+                            {tileTrailing && <span className="text-sm font-mono opacity-50">{tileTrailing}</span>}
+                            <TrailingIconElement />
                          </div>
                      )}
                  </div>
@@ -188,7 +213,7 @@ const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = fal
                 <p style={{
                     fontSize: `${getVal(obj.subSize, scrollProgress, 18)}px`,
                     color: obj.subColor
-                }} className="font-light mt-2 max-w-md mx-auto">
+                }} className="font-light mt-2 max-w-md leading-relaxed mx-auto">
                     {tileSubtitle}
                 </p>
             )}
@@ -200,7 +225,7 @@ const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = fal
             style={style} 
             className={`
                 transition-all duration-300 
-                ${isCard ? 'group hover:opacity-90 cursor-pointer' : ''} 
+                ${isCard ? 'group hover:shadow-xl cursor-pointer' : ''} 
                 ${className}
             `}
         >
@@ -225,6 +250,10 @@ const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = fal
                         className="w-full h-full transition-transform duration-700 group-hover:scale-105"
                         style={{ objectFit: (cardMediaFit === 'native' ? 'none' : cardMediaFit) as any }}
                     />
+                    {/* Floating Icon Over Media */}
+                    <div className="absolute top-4 right-4 bg-white rounded-full p-2 opacity-0 -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+                        {getIcon('lucide:ArrowUpRight')?.render({ className: "w-5 h-5 text-black" })}
+                    </div>
                 </div>
             )}
 
@@ -248,7 +277,7 @@ const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = fal
                     ))}
 
                     {hasTileContent && (
-                        <div className={isCard ? "mt-auto" : ""}>
+                        <div className={isCard ? (cardMediaSrc ? "mt-4" : "mt-auto") : ""}>
                             <TileContent />
                         </div>
                     )}
@@ -274,7 +303,12 @@ const ListRenderer = ({ obj, scrollProgress }: DOMItemProps) => {
     const template = obj.listTemplate || {};
     const overrides = obj.listItems || [];
     const gap = getVal(obj.listGap, scrollProgress, 24);
-    const count = Math.max(0, Math.floor(getVal(obj.listCount, scrollProgress, 100)));
+    
+    // RENDER POLICY APPLICATION
+    const policy = obj.renderPolicy || {};
+    const maxItems = policy.maxItems || 100; // Default safety limit
+    const rawCount = Math.max(0, Math.floor(getVal(obj.listCount, scrollProgress, 100)));
+    const count = Math.min(rawCount, maxItems);
     
     // Transform Container
     const x = getVal(obj.offsetX, scrollProgress, 0);
@@ -305,7 +339,8 @@ const ListRenderer = ({ obj, scrollProgress }: DOMItemProps) => {
 
     // --- Prepare Items ---
     let displayItems = overrides;
-    if (count > 0 && count < displayItems.length) {
+    // Apply count limit
+    if (count < displayItems.length) {
         displayItems = displayItems.slice(0, count);
     }
 

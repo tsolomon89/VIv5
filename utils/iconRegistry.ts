@@ -54,6 +54,7 @@ try {
 // 3. Unified Registry
 export interface IconEntry {
     id: string;
+    label: string;
     source: 'package' | 'repo';
     render: (props: { className?: string, style?: React.CSSProperties }) => React.ReactNode;
 }
@@ -63,8 +64,10 @@ const REGISTRY: Record<string, IconEntry> = {};
 // Register Package Icons
 Object.keys(PACKAGE_ICONS).forEach(key => {
     const Component = PACKAGE_ICONS[key];
-    REGISTRY[key] = {
-        id: key,
+    const id = `lucide:${key}`;
+    REGISTRY[id] = {
+        id,
+        label: key,
         source: 'package',
         render: (props) => React.createElement(Component, props)
     };
@@ -76,9 +79,11 @@ if (REPO_ICONS) {
         // Extract filename: /src/assets/icons/my-icon.svg -> my-icon
         const filename = path.split('/').pop()?.replace('.svg', '') || 'unknown';
         const src = REPO_ICONS[path]; 
+        const id = `repo:${filename}`;
         
-        REGISTRY[filename] = {
-            id: filename,
+        REGISTRY[id] = {
+            id,
+            label: filename,
             source: 'repo',
             render: (props) => React.createElement('img', { 
                 src: src as string, 
@@ -90,8 +95,12 @@ if (REPO_ICONS) {
 }
 
 // 4. Public API
-export const getIcon = (id: string) => {
-    return REGISTRY[id];
+export const getIcon = (id: string | undefined) => {
+    if (!id) return undefined;
+    // Smart lookup: if direct match fail, try adding 'lucide:' prefix for backward compat
+    if (REGISTRY[id]) return REGISTRY[id];
+    if (REGISTRY[`lucide:${id}`]) return REGISTRY[`lucide:${id}`];
+    return undefined;
 };
 
 export const getIconList = () => {

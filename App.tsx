@@ -10,32 +10,39 @@ import { Navigation } from './components/layout/Navigation';
 
 // Data & Hooks
 import { useCheatCode } from './hooks/useCheatCode';
-import { useSceneManager } from './hooks/useSceneManager';
 import { useTemplateManager } from './hooks/useTemplateManager';
-import { resolveSectionData } from './utils/resolution';
+import { DEFAULT_CONFIG } from './data';
+import { ConfigState } from './types';
 
 export default function App() {
   const { hasUnlockedDebug, isDebugMode, setIsDebugMode, flash, handleTouchStart, handleTouchEnd } = useCheatCode();
   
-  // State Manager 1: Content (Legacy Data Map)
-  const { 
-      sections, singleConfig, updateSingleConfig, activeSectionId, setActiveSectionId, 
-      addSceneObject, duplicateSceneObject, removeSceneObject, updateSceneObject, 
-      updateSectionHeight, updateSectionPinHeight, toggleSceneObject, activeObjects 
-  } = useSceneManager();
-
   // State Manager 2: Structure (New Template)
   const {
       template, 
+      updateSectionHeight,
       updateSectionBinding, 
       updateSectionPlacement,
       updateSectionPresentation,
       addSection,
       removeSection,
       importTemplate,
-      loadTemplate
+      loadTemplate,
+      createBlankPage,
+      // Content Methods
+      addSceneObjectToSection,
+      updateSceneObjectInSection,
+      removeSceneObjectFromSection,
+      duplicateSceneObjectInSection,
+      toggleSceneObjectInSection
   } = useTemplateManager();
   
+  // Scratchpad State (Single Mode)
+  const [singleConfig, setSingleConfig] = useState<ConfigState>(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
+  const updateSingleConfig = (key: keyof ConfigState, value: any) => {
+      setSingleConfig(prev => ({ ...prev, [key]: value }));
+  };
+
   const [copySuccess, setCopySuccess] = useState(false);
   const [viewMode, setViewMode] = useState<'single' | 'multi'>('multi');
   const [isPanelOpen, setIsPanelOpen] = useState(true);
@@ -43,6 +50,7 @@ export default function App() {
   
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const [sectionProgress, setSectionProgress] = useState<Record<string, number>>({});
+  const [activeSectionId, setActiveSectionId] = useState<string>('hero-section');
 
   // Sync active section ID if it gets deleted
   useEffect(() => {
@@ -59,14 +67,14 @@ export default function App() {
       const vH = window.innerHeight;
       const newProgress: Record<string, number> = {};
 
-      // NOTE: We are iterating over the dynamic template sections now
       template.sections.forEach(section => {
           const key = section.id;
           
-          // Resolve dimensions using the same logic as the renderer, passing the dynamic data map
-          const { height, pinHeight } = resolveSectionData(key, section.binding, sections);
+          // Basic v1 scroll height resolution: override > standard
+          const height = section.overrides?.height?.value || 1000;
+          const pinHeight = 800; // Standard pin
 
-          if (key === 'hero-section') {
+          if (section.placement.slot === 'start') {
               // Standard Scroll for Hero
               newProgress[key] = Math.min(1, Math.max(0, scrollY / (height || 1)));
           } else {
@@ -74,30 +82,23 @@ export default function App() {
               const el = sectionRefs.current[key];
               if (el) {
                   const rect = el.getBoundingClientRect();
-                  
-                  // Calculate effective sticky travel distance
                   const trackHeight = height;
                   const effectivePinHeight = pinHeight || vH;
                   const scrollDistance = Math.max(1, trackHeight - effectivePinHeight);
-                  
-                  // rect.top logic
                   const scrolledPastStart = -rect.top;
-                  const rawProgress = scrolledPastStart / scrollDistance;
-                  
-                  newProgress[key] = rawProgress;
+                  newProgress[key] = scrolledPastStart / scrollDistance;
               }
           }
       });
       setSectionProgress(newProgress);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial check
+    handleScroll(); 
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [template, sections]); // Dependency on dynamic template & sections
+  }, [template]); 
 
   const handleCopyConfig = async () => {
     try {
-        // Export the Template Structure instead of raw sections
         await navigator.clipboard.writeText(JSON.stringify(template, null, 2));
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
@@ -136,6 +137,7 @@ export default function App() {
         onCopyConfig={handleCopyConfig} 
         onImportConfig={handleImportConfig}
         onLoadTemplate={loadTemplate}
+        onCreatePage={createBlankPage}
         copySuccess={copySuccess} 
       />
       
@@ -148,7 +150,6 @@ export default function App() {
                 template={template} 
                 sectionProgress={sectionProgress} 
                 setSectionRef={setSectionRef}
-                dataMap={sections}
             />
          </div>
       </main>
@@ -156,39 +157,32 @@ export default function App() {
       {/* --- Editor --- */}
       <EditorOverlay
         isDebugMode={isDebugMode}
-        // Active ID management
-        activeSectionId={activeSectionId.includes('-section') ? activeSectionId : `${activeSectionId}-section`} // Normalize to full ID
-        setActiveSectionId={(id) => setActiveSectionId(id)}
+        activeSectionId={activeSectionId}
+        setActiveSectionId={setActiveSectionId}
         
-        // Data sources
-        sections={sections} 
         template={template}
         
-        // UI State
         sectionProgress={sectionProgress}
         isPanelOpen={isPanelOpen}
         setIsPanelOpen={setIsPanelOpen}
         viewMode={viewMode}
         setViewMode={setViewMode}
         
-        // Structure Actions
+        updateSectionHeight={updateSectionHeight}
         updateSectionBinding={updateSectionBinding}
         updateSectionPlacement={updateSectionPlacement}
         updateSectionPresentation={updateSectionPresentation}
         addSection={addSection}
         removeSection={removeSection}
         
-        // Content Actions (Legacy Bridge)
-        updateSectionHeight={updateSectionHeight}
-        updateSectionPinHeight={updateSectionPinHeight}
         singleConfig={singleConfig}
         updateSingleConfig={updateSingleConfig}
-        addSceneObject={addSceneObject}
-        activeObjects={activeObjects}
-        toggleSceneObject={toggleSceneObject}
-        duplicateSceneObject={duplicateSceneObject}
-        removeSceneObject={removeSceneObject}
-        updateSceneObject={updateSceneObject}
+        
+        addSceneObject={addSceneObjectToSection}
+        updateSceneObject={updateSceneObjectInSection}
+        removeSceneObject={removeSceneObjectFromSection}
+        duplicateSceneObject={duplicateSceneObjectInSection}
+        toggleSceneObject={toggleSceneObjectInSection}
       />
       
       <style>{`

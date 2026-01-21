@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Menu, X, Power, Check, Copy, Download, LayoutTemplate, ChevronDown } from 'lucide-react';
+import { Menu, X, Power, Check, Copy, Download, LayoutTemplate, ChevronDown, PlusCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TEMPLATES } from '../../data';
 import { checkCoverage, getMissingSignaturesLabel } from '../../utils/coverage';
@@ -14,12 +14,13 @@ interface HeaderProps {
     onCopyConfig: () => void;
     onImportConfig?: () => void; 
     onLoadTemplate?: (id: string) => void;
+    onCreatePage?: () => void; // New Prop
     copySuccess: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
     isNavOpen, setIsNavOpen, hasUnlockedDebug, isDebugMode, setIsDebugMode, 
-    onCopyConfig, onImportConfig, onLoadTemplate, copySuccess 
+    onCopyConfig, onImportConfig, onLoadTemplate, onCreatePage, copySuccess 
 }) => {
     const [showTemplates, setShowTemplates] = useState(false);
     const coverage = checkCoverage();
@@ -62,6 +63,9 @@ export const Header: React.FC<HeaderProps> = ({
                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                         className="absolute top-full right-0 mt-2 w-48 bg-[#1a1a1b] border border-white/10 rounded-xl overflow-hidden shadow-2xl py-1"
                                       >
+                                          <div className="px-4 py-2 border-b border-white/5">
+                                              <span className="text-[10px] uppercase font-bold text-white/40 tracking-wider">Presets</span>
+                                          </div>
                                           {Object.values(TEMPLATES).map(t => (
                                               <button
                                                 key={t.id}
@@ -71,6 +75,18 @@ export const Header: React.FC<HeaderProps> = ({
                                                   {t.name}
                                               </button>
                                           ))}
+                                          
+                                          {onCreatePage && (
+                                              <div className="border-t border-white/5 pt-1 mt-1">
+                                                  <button
+                                                    onClick={() => { onCreatePage(); setShowTemplates(false); }}
+                                                    className="w-full text-left px-4 py-2.5 text-xs text-blue-300 hover:text-blue-100 hover:bg-blue-500/10 transition-colors flex items-center gap-2"
+                                                  >
+                                                      <PlusCircle size={12} />
+                                                      Create New Page
+                                                  </button>
+                                              </div>
+                                          )}
                                       </motion.div>
                                   )}
                               </AnimatePresence>

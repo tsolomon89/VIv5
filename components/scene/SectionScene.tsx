@@ -1,9 +1,11 @@
+
 import React, { useMemo } from 'react';
 import { PrismBackground } from './PrismBackground';
 import { StormBackground } from './StormBackground';
 import { SceneDOMRenderer } from './SceneDOMRenderer';
-import { MarqueeRenderer } from './MarqueeRenderer'; // Now using WebGL marquee
+import { MarqueeRenderer } from './MarqueeRenderer'; 
 import { SceneObject, NumberParam, ConfigState } from '../../types';
+import { flattenScene } from '../../utils/scene';
 
 // Interpolation Helper
 const getRenderValue = (param: NumberParam, p: number): number => {
@@ -52,27 +54,30 @@ const getRenderConfig = (config: ConfigState, p: number): any => {
 
 export const SectionScene = ({ objects, progress }: { objects: SceneObject[], progress: number }) => {
     
+    // Flatten hierarchy for WebGL/Marquee processing
+    const flatObjects = useMemo(() => flattenScene(objects), [objects]);
+    
     // WebGL Objects (Prism, Storm)
     const webglObjects = useMemo(() => 
-        objects.filter(o => o.shape !== 'tile' && o.shape !== 'text' && o.shape !== 'card' && o.shape !== 'list'),
-    [objects]);
+        flatObjects.filter(o => o.shape !== 'tile' && o.shape !== 'text' && o.shape !== 'card' && o.shape !== 'list' && o.shape !== 'group'),
+    [flatObjects]);
     
     // Marquee Objects (List with layout marquee)
     const marqueeObjects = useMemo(() => 
-        objects.filter(o => o.shape === 'list' && o.listLayout === 'marquee'),
-    [objects]);
+        flatObjects.filter(o => o.shape === 'list' && o.listLayout === 'marquee'),
+    [flatObjects]);
 
-    // DOM Objects (Tile, Card, List (Stack/Grid), Text) - Exclude Marquee Lists
+    // DOM Objects - Passed strictly as top-level because DOMRenderer handles recursion itself
     const domObjects = useMemo(() => 
         objects.filter(o => {
             if (o.shape === 'list' && o.listLayout === 'marquee') return false;
-            return o.shape === 'tile' || o.shape === 'text' || o.shape === 'card' || o.shape === 'list';
+            return o.shape === 'tile' || o.shape === 'text' || o.shape === 'card' || o.shape === 'list' || o.shape === 'group';
         }),
     [objects]);
 
     return (
         <div className="absolute inset-0 pointer-events-none z-0">
-             {/* 1. WebGL Marquee Layer (Optimized) */}
+             {/* 1. WebGL Marquee Layer */}
              {marqueeObjects.map(obj => (
                  <MarqueeRenderer key={obj.id} listObject={obj} scrollProgress={progress} />
              ))}
@@ -104,12 +109,13 @@ export const SectionScene = ({ objects, progress }: { objects: SceneObject[], pr
                                 flashDuration={config.flashDuration}
                                 boltDuration={config.boltDuration}
                                 boltGlow={config.boltGlow}
+                                suspendWhenOffscreen={true}
                             />
                         ) : (
                             <PrismBackground
                                 {...config}
                                 transparent={true}
-                                suspendWhenOffscreen={false}
+                                suspendWhenOffscreen={true}
                             />
                         )}
                     </div>

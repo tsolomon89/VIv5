@@ -6,7 +6,6 @@ import { trackContext, trackRaf } from '../../utils/performance';
 import { useVisibility } from '../../hooks/useVisibility';
 
 // --- Shader Definitions ---
-
 const vertexMesh = /* glsl */ `
     attribute vec2 position;
     attribute vec2 uv;
@@ -84,28 +83,14 @@ const fragmentMesh = /* glsl */ `
     }
 `;
 
-// Helper: Parse "TL TR BR BL" or "All" string to [BR, TR, BL, TL] for shader
-// Note: CSS order is Top-Left, Top-Right, Bottom-Right, Bottom-Left
-// Shader sdRoundedBox expects specific quadrant mapping.
-// CSS Input: TL, TR, BR, BL
-// Output map: [TR, BR, TL, BL]
 const parseRadius = (str: string): [number, number, number, number] => {
     if (!str) return [0,0,0,0];
     const parts = str.replace(/px/g, '').split(' ').map(parseFloat).filter(n => !isNaN(n));
-    
-    if (parts.length === 1) {
-        const r = parts[0];
-        return [r, r, r, r]; 
-    }
-    if (parts.length === 4) {
-        // CSS: TL(0), TR(1), BR(2), BL(3)
-        // Shader Expects: TR, BR, TL, BL
-        return [parts[1], parts[2], parts[0], parts[3]];
-    }
+    if (parts.length === 1) return [parts[0], parts[0], parts[0], parts[0]]; 
+    if (parts.length === 4) return [parts[1], parts[2], parts[0], parts[3]];
     return [0,0,0,0];
 };
 
-// Helper: Get value
 const getVal = (param: NumberParam | undefined, progress: number, def: number = 0) => {
     if (!param) return def;
     if (param.isLinked && param.endValue !== null) {
@@ -122,17 +107,18 @@ interface MarqueeRendererProps {
 export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, scrollProgress }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const mouseRef = useRef({ x: -1, y: -1, active: false });
-    const colorHelper = useRef(new Color()); // Reusable color object to avoid GC
+    const colorHelper = useRef(new Color()); 
     const itemStateRef = useRef<Map<string, { scale: number, grayscale: number }>>(new Map());
     
-    // Config: bufferPx for overscan
-    const bufferPx = getVal(listObject.bufferPx, 0, 200); // Default 200px overscan
+    // Render Policy Config
+    const policy = listObject.renderPolicy || {};
+    const overscan = policy.overscanPx ?? 100;
+
     const isVisible = useVisibility({ 
         ref: containerRef, 
-        rootMargin: `${bufferPx}px 0px ${bufferPx}px 0px` 
+        rootMargin: `${overscan}px 0px ${overscan}px 0px` 
     });
 
-    // Stable ref for scrollProgress to avoid re-initializing WebGL on scroll
     const progressRef = useRef(scrollProgress);
     useEffect(() => { progressRef.current = scrollProgress; }, [scrollProgress]);
 
@@ -140,22 +126,18 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
     const template = listObject.listTemplate || {};
     const items = listObject.listItems || [];
     
-    // Radius Pattern Logic
     const radiusPatterns = useMemo(() => 
         listObject.listRadiusPattern 
             ? listObject.listRadiusPattern.split('|').map(s => s.trim()) 
             : [],
     [listObject.listRadiusPattern]);
 
-    // Memoize flattened items to avoid recreation on every render frame
     const flattenedItems = useMemo(() => {
         return items.map((item, i) => {
-            // Determine radius: Item Override > Pattern > Template
             let r = item.cardRadius || template.cardRadius || '0px';
             if (radiusPatterns.length > 0) {
                 r = radiusPatterns[i % radiusPatterns.length];
             }
-
             return {
                 ...template,
                 ...item,
@@ -169,16 +151,11 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
         const container = containerRef.current;
         if (!container || flattenedItems.length === 0) return;
 
-        // --- Setup OGL ---
         trackContext(1);
         const dpr = Math.min(1.5, window.devicePixelRatio || 1);
         
         const renderer = new Renderer({ 
-            dpr, 
-            alpha: true, 
-            antialias: false, 
-            depth: false,
-            autoClear: false 
+            dpr, alpha: true, antialias: false, depth: false, autoClear: false 
         });
         
         const gl = renderer.gl;
@@ -187,40 +164,24 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
         Object.assign(gl.canvas.style, {
-            position: 'absolute',
-            inset: '0',
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            zIndex: 10 // Match DOM z-index
+            position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10
         });
         
         container.appendChild(gl.canvas);
 
-        // --- Resources ---
         const itemTextures = flattenedItems.map(obj => {
             const t = new Texture(gl, {
-                wrapS: gl.CLAMP_TO_EDGE,
-                wrapT: gl.CLAMP_TO_EDGE,
-                minFilter: gl.LINEAR,
-                magFilter: gl.LINEAR,
-                flipY: false
+                wrapS: gl.CLAMP_TO_EDGE, wrapT: gl.CLAMP_TO_EDGE, minFilter: gl.LINEAR, magFilter: gl.LINEAR, flipY: false
             });
-            
-            t.image = new Uint8Array([200, 200, 200, 255]); // Placeholder
-            t.width = 1;
-            t.height = 1;
-            t.needsUpdate = true;
+            t.image = new Uint8Array([200, 200, 200, 255]); 
+            t.width = 1; t.height = 1; t.needsUpdate = true;
             
             if (obj.textureUrl) {
                 const img = new Image();
                 img.crossOrigin = "anonymous";
                 img.src = obj.textureUrl;
                 img.onload = () => {
-                    t.image = img;
-                    t.width = img.width;
-                    t.height = img.height;
-                    t.needsUpdate = true;
+                    t.image = img; t.width = img.width; t.height = img.height; t.needsUpdate = true;
                 };
             }
             return { id: obj.id, texture: t, aspect: 1, radius: parseRadius(obj.cardRadius) };
@@ -247,27 +208,17 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
                 modelViewMatrix: { value: new Float32Array(16) },
                 projectionMatrix: { value: new Float32Array(16) }
             },
-            cullFace: false,
-            transparent: true
+            cullFace: false, transparent: true
         });
 
         const mesh = new Mesh(gl, { geometry, program });
 
-        // --- State ---
         let rafId = 0;
         let scrollOffset = 0;
         let isPaused = false;
         let lastTime = performance.now();
 
-        // --- Layout Params State ---
-        let width = 0;
-        let height = 0;
-        let itemW = 0;
-        let itemH = 0;
-        let totalItemWidth = 0;
-        let speed = 1;
-        let direction = 1;
-        let gap = 32;
+        let width = 0, height = 0, itemW = 0, itemH = 0, totalItemWidth = 0, speed = 1, direction = 1, gap = 32;
 
         const updateLayout = () => {
             if (!container) return;
@@ -276,29 +227,18 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
             renderer.setSize(width, height);
             
             const currentP = progressRef.current;
-            
             itemW = getVal(template.cardWidth, currentP, 400);
             itemH = getVal(template.cardHeight, currentP, 560);
             gap = getVal(listObject.listGap, currentP, 32);
 
-            // Responsive check
-            if (width < 768) {
-                itemW = 280;
-                itemH = 400;
-            }
-
+            if (width < 768) { itemW = 280; itemH = 400; }
             totalItemWidth = itemW + gap;
             
-            const projection = new Float32Array([
-                2/width, 0, 0, 0,
-                0, -2/height, 0, 0,  
-                0, 0, -1, 0,
-                -1, 1, 0, 1     
+            program.uniforms.projectionMatrix.value = new Float32Array([
+                2/width, 0, 0, 0, 0, -2/height, 0, 0, 0, 0, -1, 0, -1, 1, 0, 1     
             ]);
-            program.uniforms.projectionMatrix.value = projection;
         };
         
-        // --- Interaction ---
         const onMove = (e: MouseEvent) => {
             const rect = container.getBoundingClientRect();
             mouseRef.current.x = e.clientX - rect.left;
@@ -306,16 +246,12 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
             mouseRef.current.active = true;
         };
 
-        const onLeave = () => {
-            mouseRef.current.active = false;
-        };
+        const onLeave = () => { mouseRef.current.active = false; };
 
-        // Attach listeners
         container.addEventListener('mousemove', onMove);
         container.addEventListener('mouseleave', onLeave);
         container.addEventListener('mouseenter', onMove);
 
-        // --- Render Loop ---
         const render = (t: number) => {
             rafId = requestAnimationFrame(render);
             if (!isVisible) return; 
@@ -324,111 +260,77 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
             lastTime = t;
             
             const currentP = progressRef.current;
-            
-            // Read latest config
             speed = getVal(listObject.listSpeed, currentP, 1);
             direction = getVal(listObject.listDirection, currentP, 1);
             const globalOffsetY = getVal(listObject.offsetY, currentP, 0);
             const globalOffsetX = getVal(listObject.offsetX, currentP, 0);
-            
             const pauseOnHover = listObject.marqueeHoverPause ?? true;
             
-            // Interaction Params
             const hoverScale = getVal(listObject.itemHoverScale, currentP, 1.05);
             const baseGrayscale = getVal(listObject.itemBaseGrayscale, currentP, 0.0);
             const hoverGrayscale = getVal(listObject.itemHoverGrayscale, currentP, 0.0);
             const transitionSpeed = getVal(listObject.listSmoothness, currentP, 0.1);
-            
-            // Border Props
             const bWidth = getVal(template.cardBorderWidth, currentP, 0);
             const bColorHex = template.cardBorderColor || '#ffffff';
             
-            // Update shared uniforms
             colorHelper.current.set(bColorHex);
             program.uniforms.uBorderColor.value = colorHelper.current;
             program.uniforms.uBorderWidth.value = bWidth;
             program.uniforms.uDimensions.value[0] = itemW;
             program.uniforms.uDimensions.value[1] = itemH;
 
-            // Hover Pause Logic
             const centerY = (height / 2) + globalOffsetY;
             let isHoveringContainer = false;
             if (mouseRef.current.active) {
-                const mx = mouseRef.current.x;
                 const my = mouseRef.current.y;
-                if (my >= centerY - itemH/2 && my <= centerY + itemH/2) {
-                    isHoveringContainer = true;
-                }
+                if (my >= centerY - itemH/2 && my <= centerY + itemH/2) isHoveringContainer = true;
             }
             
-            if (pauseOnHover && isHoveringContainer) {
-                isPaused = true;
-            } else {
-                isPaused = false;
-            }
+            if (pauseOnHover && isHoveringContainer) isPaused = true;
+            else isPaused = false;
 
-            if (!isPaused) {
-                scrollOffset += (speed * 60) * dt * direction;
-            }
+            if (!isPaused) scrollOffset += (speed * 60) * dt * direction;
 
             gl.clearColor(0,0,0,0);
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             const totalLoopWidth = flattenedItems.length * totalItemWidth;
-            // Handle negative scrolling loop
             const effectiveScroll = ((scrollOffset % totalLoopWidth) + totalLoopWidth) % totalLoopWidth;
-            
             let currentX = -effectiveScroll + globalOffsetX;
             
             let count = 0;
             const maxCount = 50; 
 
-            // Single Track Loop
             while (currentX < width + itemW && count < maxCount) {
                 flattenedItems.forEach((obj, i) => {
                     const drawX = currentX + (i * totalItemWidth);
-                    
                     if (drawX > -itemW && drawX < width) {
                         const texData = itemTextures[i];
-                        const img = texData.texture.image as HTMLImageElement;
-                        if (img && typeof img.width === 'number' && img.width > 1) {
-                            texData.aspect = img.width / img.height;
+                        if (texData.texture.image && typeof (texData.texture.image as HTMLImageElement).width === 'number') {
+                            texData.aspect = (texData.texture.image as HTMLImageElement).width / (texData.texture.image as HTMLImageElement).height;
                         }
                         
-                        // Per-item uniform updates
                         program.uniforms.uTexture.value = texData.texture;
                         program.uniforms.uImgAspect.value = texData.aspect;
                         program.uniforms.uRadii.value.set(texData.radius);
 
-                        // Hover Logic
                         let isItemHovered = false;
                         if (mouseRef.current.active) {
                             const mx = mouseRef.current.x;
                             const my = mouseRef.current.y;
-                            if (mx >= drawX && mx <= drawX + itemW &&
-                                my >= (centerY - itemH/2) && my <= (centerY + itemH/2)) {
-                                isItemHovered = true;
-                            }
+                            if (mx >= drawX && mx <= drawX + itemW && my >= (centerY - itemH/2) && my <= (centerY + itemH/2)) isItemHovered = true;
                         }
                         
-                        // State Transition
                         const targetScale = isItemHovered ? hoverScale : 1.0;
                         const targetGrayscale = isItemHovered ? hoverGrayscale : baseGrayscale;
                         
                         let state = itemStateRef.current.get(obj.id);
-                        if (!state) {
-                            state = { scale: 1.0, grayscale: baseGrayscale };
-                            itemStateRef.current.set(obj.id, state);
-                        }
+                        if (!state) { state = { scale: 1.0, grayscale: baseGrayscale }; itemStateRef.current.set(obj.id, state); }
                         
                         state.scale += (targetScale - state.scale) * transitionSpeed;
                         state.grayscale += (targetGrayscale - state.grayscale) * transitionSpeed;
                         
-                        if(Math.abs(targetScale - state.scale) < 0.001) state.scale = targetScale;
-                        if(Math.abs(targetGrayscale - state.grayscale) < 0.001) state.grayscale = targetGrayscale;
-
                         program.uniforms.uGrayscale.value = state.grayscale;
-                        
                         const finalW = itemW * state.scale;
                         const finalH = itemH * state.scale;
                         const posX = drawX + itemW/2;
@@ -447,23 +349,20 @@ export const MarqueeRenderer: React.FC<MarqueeRendererProps> = ({ listObject, sc
 
         window.addEventListener('resize', updateLayout);
         updateLayout();
-        
         rafId = requestAnimationFrame(render);
         trackRaf(1);
 
         return () => {
             cancelAnimationFrame(rafId);
             window.removeEventListener('resize', updateLayout);
-            
             container.removeEventListener('mousemove', onMove);
             container.removeEventListener('mouseleave', onLeave);
             container.removeEventListener('mouseenter', onMove);
-            
             if (gl.canvas.parentNode) gl.canvas.remove();
             trackContext(-1);
             trackRaf(-1);
         };
-    }, [listObject.id, flattenedItems, isVisible]); // Dependencies updated
+    }, [listObject.id, flattenedItems, isVisible]); 
 
     return <div ref={containerRef} className="w-full h-full relative pointer-events-auto" />;
 };

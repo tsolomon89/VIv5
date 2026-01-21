@@ -1,5 +1,7 @@
+
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
+import { trackContext, trackRaf } from '../../utils/performance';
 
 interface StormProps {
     variant?: 'atmosphere' | 'lightning';
@@ -18,6 +20,7 @@ interface StormProps {
     flashDuration?: number;
     boltDuration?: number;
     boltGlow?: number;
+    suspendWhenOffscreen?: boolean;
     className?: string;
 }
 
@@ -38,6 +41,7 @@ export const StormBackground: React.FC<StormProps> = ({
     flashDuration = 1.0,
     boltDuration = 0.5,
     boltGlow = 1.0,
+    suspendWhenOffscreen = false,
     className = "" 
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -62,6 +66,9 @@ export const StormBackground: React.FC<StormProps> = ({
 
   useEffect(() => {
     if (!mountRef.current) return;
+
+    // Track Context
+    trackContext(1);
 
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -266,14 +273,26 @@ export const StormBackground: React.FC<StormProps> = ({
     scene.add(mesh);
 
     const clock = new THREE.Clock();
-    let animationId: number;
+    let animationId: number = 0;
 
     const animate = () => {
       uniforms.uTime.value = clock.getElapsedTime();
       renderer.render(scene, camera);
       animationId = requestAnimationFrame(animate);
     };
-    animate();
+    
+    const startAnimation = () => {
+        if (animationId) return;
+        animate();
+        trackRaf(1);
+    };
+    
+    const stopAnimation = () => {
+        if (!animationId) return;
+        cancelAnimationFrame(animationId);
+        animationId = 0;
+        trackRaf(-1);
+    };
 
     const handleResize = () => {
       const w = window.innerWidth;
@@ -283,18 +302,34 @@ export const StormBackground: React.FC<StormProps> = ({
     };
 
     window.addEventListener('resize', handleResize);
+    
+    // Visibility Logic
+    let io: IntersectionObserver | undefined;
+    if (suspendWhenOffscreen && mountRef.current) {
+        io = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) startAnimation();
+            else stopAnimation();
+        });
+        io.observe(mountRef.current);
+        startAnimation(); // Initial
+    } else {
+        startAnimation();
+    }
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animationId);
+      stopAnimation();
+      io?.disconnect();
+      
       if (mountRef.current && renderer.domElement) {
         mountRef.current.removeChild(renderer.domElement);
       }
       geometry.dispose();
       material.dispose();
       renderer.dispose();
+      trackContext(-1);
     };
-  }, [variant]);
+  }, [variant]); // Re-init on variant change
 
   useEffect(() => {
     if (uniformsRef.current) {

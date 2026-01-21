@@ -1,5 +1,5 @@
 
-export type ShapeType = 'tetrahedron' | 'cube' | 'sphere' | 'cylinder' | 'torus' | 'column' | 'lightning' | 'atmosphere' | 'tile' | 'plane' | 'card' | 'text' | 'list';
+export type ShapeType = 'tetrahedron' | 'cube' | 'sphere' | 'cylinder' | 'torus' | 'column' | 'lightning' | 'atmosphere' | 'tile' | 'plane' | 'card' | 'text' | 'list' | 'group';
 export type AnimType = 'rotate' | 'hover' | '3drotate' | 'static' | 'marquee';
 
 // Collection Types
@@ -18,7 +18,19 @@ export interface NumberParam {
   isLinked: boolean;    // Is linked to scroll?
 }
 
+export type RenderPolicy = {
+  virtualization?: "none" | "window";
+  overscanPx?: number;
+  maxItems?: number;
+};
+
 export interface ConfigState {
+  // Hierarchy
+  children?: SceneObject[];
+
+  // Render Policy
+  renderPolicy?: RenderPolicy;
+
   // Common
   offsetZ: NumberParam;
 
@@ -94,6 +106,9 @@ export interface ConfigState {
   leadingOpacity: NumberParam;
   leadingRadius: NumberParam; // Mask radius
   leadingFit: LeadingFit;
+  leadingPadding: NumberParam;
+  leadingBackground: string;
+  leadingColor: string;
   
   // Advanced Typography Styles
   headingSize: NumberParam;

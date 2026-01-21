@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { ConfigState, LeadingKind, LeadingPlacement, ShapeType, CollectionLayout, NumberParam } from '../../types';
 import { ControlSlider } from './ControlSlider';
-import { Image as ImageIcon, LayoutGrid, List as ListIcon, MoveRight, Type, Square, CreditCard, AlignLeft, AlignCenter, AlignRight, PauseCircle, Activity, BoxSelect, Plus, Trash2, Edit2, ChevronLeft, GripVertical, Play, MousePointer2, Palette } from 'lucide-react';
+import { Image as ImageIcon, LayoutGrid, List as ListIcon, MoveRight, Type, CreditCard, AlignLeft, AlignCenter, AlignRight, PauseCircle, BoxSelect, Plus, Trash2, Edit2, ChevronLeft, Play, MousePointer2, Palette } from 'lucide-react';
 import { getIconList } from '../../utils/iconRegistry';
 
 // Helper for safe params in templates
@@ -160,7 +161,7 @@ export function ConfigControls({ config, onChange, headerOffset = 0, sectionHead
                                         <option value="">None</option>
                                         {getIconList().map(entry => (
                                             <option key={entry.id} value={entry.id}>
-                                                {entry.id} {entry.source === 'repo' ? '(SVG)' : ''}
+                                                {entry.label} {entry.source === 'repo' ? '(SVG)' : ''}
                                             </option>
                                         ))}
                                      </select>

@@ -1,16 +1,15 @@
 
 import React, { useMemo } from 'react';
-import { PageTemplate, SectionInstance, SectionConfig } from '../../types';
+import { PageTemplate, SectionInstance } from '../../types';
 import { SectionRenderer } from './SectionRenderer';
 
 interface PageRendererProps {
     template: PageTemplate;
     sectionProgress: Record<string, number>;
     setSectionRef: (id: string, el: HTMLElement | null) => void;
-    dataMap: Record<string, SectionConfig>;
 }
 
-export const PageRenderer: React.FC<PageRendererProps> = ({ template, sectionProgress, setSectionRef, dataMap }) => {
+export const PageRenderer: React.FC<PageRendererProps> = ({ template, sectionProgress, setSectionRef }) => {
     
     // Sort Sections based on Placement Slot and Order
     const sortedSections = useMemo(() => {
@@ -41,9 +40,8 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ template, sectionPro
                 <SectionRenderer 
                     key={section.id}
                     section={section}
-                    progress={sectionProgress[section.id] || 0} // Map 'hero-section' to progress
-                    setRef={(el) => setSectionRef(section.id, el)} // This ID must match what App.tsx uses for tracking
-                    dataMap={dataMap}
+                    progress={sectionProgress[section.id] || 0}
+                    setRef={(el) => setSectionRef(section.id, el)}
                 />
             ))}
         </>
