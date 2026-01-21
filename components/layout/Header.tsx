@@ -1,0 +1,29 @@
+
+import React from 'react';
+import { Menu, X, Power, Check, Copy, Monitor } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+
+export const Header = ({ isNavOpen, setIsNavOpen, hasUnlockedDebug, isDebugMode, setIsDebugMode, onCopyConfig, copySuccess }: any) => (
+  <header className="fixed top-0 left-0 right-0 z-50 flex items-start justify-between px-6 py-6 mix-blend-difference text-white pointer-events-none">
+    <div className="text-2xl font-bold tracking-tighter pointer-events-auto cursor-pointer z-50 relative py-2">vi</div>
+    <div className="flex flex-col items-end gap-4 pointer-events-auto relative z-50">
+        <button onClick={() => setIsNavOpen(!isNavOpen)} className="p-2 -mr-2 hover:opacity-70 transition-opacity cursor-pointer">
+          {isNavOpen ? <X size={32} strokeWidth={1.5} /> : <Menu size={32} strokeWidth={1.5} />}
+        </button>
+        <AnimatePresence>
+          {hasUnlockedDebug && (
+            <div className="flex flex-col gap-4 items-center">
+                {isDebugMode && (
+                  <motion.button initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} onClick={onCopyConfig} className="flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 cursor-pointer bg-white/10 text-white/50 hover:bg-white/20 hover:text-white" title="Copy Current Configuration">
+                      {copySuccess ? <Check size={20} className="text-green-400" /> : <Copy size={20} strokeWidth={2} />}
+                  </motion.button>
+                )}
+                <motion.button initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} onClick={() => setIsDebugMode(!isDebugMode)} className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 cursor-pointer ${isDebugMode ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.4)]' : 'bg-white/10 text-white/50 hover:bg-white/20 hover:text-white'}`} title={`Developer Mode ${isDebugMode ? 'ON' : 'OFF'}`}>
+                    <Power size={20} strokeWidth={2} />
+                </motion.button>
+            </div>
+          )}
+        </AnimatePresence>
+    </div>
+  </header>
+);

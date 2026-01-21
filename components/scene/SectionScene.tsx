@@ -1,0 +1,120 @@
+import React, { useMemo } from 'react';
+import { PrismBackground } from './PrismBackground';
+import { StormBackground } from './StormBackground';
+import { SceneDOMRenderer } from './SceneDOMRenderer';
+import { MarqueeRenderer } from './MarqueeRenderer'; // Now using WebGL marquee
+import { SceneObject, NumberParam, ConfigState } from '../../types';
+
+// Interpolation Helper
+const getRenderValue = (param: NumberParam, p: number): number => {
+    if (param.isLinked && param.endValue !== null) {
+      return param.value + (param.endValue - param.value) * p;
+    }
+    return param.value;
+};
+
+const getRenderConfig = (config: ConfigState, p: number): any => {
+    const props: any = {};
+    Object.keys(config).forEach(key => {
+      const k = key as keyof ConfigState;
+      if (
+          k === 'shape' || k === 'animationType' || 
+          k === 'tileHeading' || k === 'tileLabel' || k === 'tileSubtitle' || 
+          k === 'tileTrailing' || k === 'tileTrailingIcon' ||
+          k === 'tileAlign' || k === 'tileTag' ||
+          k === 'headingColor' || k === 'labelColor' || k === 'subColor' ||
+          k === 'textureUrl' || k === 'sizingMode' || 
+          k === 'leadingIcon' || k === 'leadingImage' || k === 'leadingPlacement' || k === 'leadingFit' ||
+          k === 'borderRadius' ||
+          k === 'cardRadius' || k === 'cardBackground' || k === 'cardBorder' ||
+          k === 'cardMediaSrc' || k === 'cardMediaFit' || k === 'cardClip' ||
+          // List Types
+          k === 'listLayout' || k === 'listTemplate' || k === 'listItems' || k === 'clipWithinSection' ||
+          k === 'containerOverflow' || k === 'itemOverflow' ||
+          // Legacy support
+          k === 'textHeading' || k === 'textLabel' || k === 'textSubtitle' || 
+          k === 'textTrailing' || k === 'textTrailingIcon' ||
+          k === 'textAlign' || k === 'textTag' ||
+          // Marquee Specific
+          k === 'marqueeHoverPause' || k === 'marqueeHoverEffect'
+      ) {
+        props[k] = config[k];
+      } else {
+        props[k] = getRenderValue(config[k] as NumberParam, p);
+      }
+    });
+    return {
+      ...props,
+      offset: { x: props.offsetX, y: props.offsetY, z: props.offsetZ },
+      rotation: { x: props.rotateX, y: props.rotateY, z: props.rotateZ }
+    };
+};
+
+export const SectionScene = ({ objects, progress }: { objects: SceneObject[], progress: number }) => {
+    
+    // WebGL Objects (Prism, Storm)
+    const webglObjects = useMemo(() => 
+        objects.filter(o => o.shape !== 'tile' && o.shape !== 'text' && o.shape !== 'card' && o.shape !== 'list'),
+    [objects]);
+    
+    // Marquee Objects (List with layout marquee)
+    const marqueeObjects = useMemo(() => 
+        objects.filter(o => o.shape === 'list' && o.listLayout === 'marquee'),
+    [objects]);
+
+    // DOM Objects (Tile, Card, List (Stack/Grid), Text) - Exclude Marquee Lists
+    const domObjects = useMemo(() => 
+        objects.filter(o => {
+            if (o.shape === 'list' && o.listLayout === 'marquee') return false;
+            return o.shape === 'tile' || o.shape === 'text' || o.shape === 'card' || o.shape === 'list';
+        }),
+    [objects]);
+
+    return (
+        <div className="absolute inset-0 pointer-events-none z-0">
+             {/* 1. WebGL Marquee Layer (Optimized) */}
+             {marqueeObjects.map(obj => (
+                 <MarqueeRenderer key={obj.id} listObject={obj} scrollProgress={progress} />
+             ))}
+
+             {/* 2. DOM Layer (Tile, Cards, Stack/Grid List) */}
+             <SceneDOMRenderer objects={domObjects} scrollProgress={progress} />
+
+             {/* 3. WebGL Layer (Prism/Storm) */}
+             {webglObjects.map(obj => {
+                const config = getRenderConfig(obj, progress);
+
+                return (
+                    <div key={obj.id} className="absolute inset-0 pointer-events-none">
+                        {obj.shape === 'lightning' || obj.shape === 'atmosphere' ? (
+                            <StormBackground
+                                variant={obj.shape === 'lightning' ? 'lightning' : 'atmosphere'}
+                                hue={config.hue}
+                                intensity={config.intensity}
+                                strikeIntensity={config.strikeIntensity}
+                                frequency={config.frequency}
+                                speed={config.speed}
+                                cloudiness={config.cloudiness}
+                                boltWidth={config.boltWidth}
+                                zigzag={config.zigzag}
+                                saturation={config.saturation}
+                                diagonal={config.diagonal}
+                                depth={config.depth}
+                                cloudScale={config.cloudScale}
+                                flashDuration={config.flashDuration}
+                                boltDuration={config.boltDuration}
+                                boltGlow={config.boltGlow}
+                            />
+                        ) : (
+                            <PrismBackground
+                                {...config}
+                                transparent={true}
+                                suspendWhenOffscreen={false}
+                            />
+                        )}
+                    </div>
+                );
+             })}
+        </div>
+    );
+};
