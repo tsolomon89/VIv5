@@ -54,9 +54,15 @@ export const resolveBindingData = (binding: Binding): any[] => {
             title: 'Superdesign Studio', 
             tileHeading: 'Superdesign®',
             tileSubtitle: 'A digital design studio crafting experiences for the modern web.',
+            tileLabel: 'EST. 2024',
+            tileTrailing: 'TOKYO',
             category: 'Brand',
             year: '2024',
-            description: 'Based in Tokyo, working globally.'
+            description: 'Based in Tokyo, working globally.',
+            // Assets
+            image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
+            textureUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
+            leadingIcon: 'lucide:Zap'
         }];
     }
 

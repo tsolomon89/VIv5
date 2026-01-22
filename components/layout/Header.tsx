@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Power, Check, Copy, Download, LayoutTemplate, ChevronDown, PlusCircle, ShieldAlert } from 'lucide-react';
+import { Menu, X, Power, Check, Copy, Download, LayoutTemplate, ChevronDown, PlusCircle, ShieldAlert, Lock, AlertTriangle } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TEMPLATES } from '../../data';
 import { checkCoverage, getMissingSignaturesLabel } from '../../utils/coverage';
@@ -16,7 +16,7 @@ interface HeaderProps {
     onCopyConfig: () => void;
     onImportConfig?: () => void; 
     onLoadTemplate?: (id: string) => void;
-    onCreatePage?: () => void; // New Prop
+    onCreatePage?: () => void; 
     copySuccess: boolean;
 }
 
@@ -27,6 +27,11 @@ export const Header: React.FC<HeaderProps> = ({
     const [showTemplates, setShowTemplates] = useState(false);
     const coverage = checkCoverage();
     const integrityIssues = checkPresetIntegrity(PRESET_REGISTRY);
+    
+    // Group issues by type
+    const violations = integrityIssues.filter(i => i.status === 'version_violation');
+    const missing = integrityIssues.filter(i => i.status === 'missing_in_manifest');
+    const mismatches = integrityIssues.filter(i => i.status === 'mismatch');
 
     // Dev Helper: Log manifest when in debug mode
     useEffect(() => {
@@ -45,22 +50,47 @@ export const Header: React.FC<HeaderProps> = ({
             <AnimatePresence>
               {hasUnlockedDebug && (
                 <div className="flex flex-col gap-4 items-end">
-                    {/* Integrity Alert */}
-                    {integrityIssues.length > 0 && isDebugMode && (
-                         <div className="bg-red-500 border border-red-400 rounded-lg px-3 py-2 text-[10px] font-mono text-white shadow-xl flex flex-col gap-1 max-w-[250px]">
+                    
+                    {/* CRITICAL: Versioning Violation */}
+                    {violations.length > 0 && isDebugMode && (
+                         <div className="bg-red-600 border border-red-400 rounded-lg px-3 py-2 text-[10px] font-mono text-white shadow-xl flex flex-col gap-1 max-w-[280px]">
+                            <div className="flex items-center gap-2 font-bold uppercase tracking-wider border-b border-white/20 pb-1 mb-1">
+                                <Lock size={12} />
+                                Versioning Violation
+                            </div>
+                            <div className="opacity-90 leading-relaxed font-bold">
+                                {violations.length} preset(s) in v1 have drifted.
+                            </div>
+                            <div className="opacity-80 leading-relaxed">
+                                You modified a locked version. Please revert or bump to .v2.
+                            </div>
+                            <ul className="list-disc list-inside opacity-60">
+                                {violations.slice(0, 3).map(i => (
+                                    <li key={i.key} className="truncate">{i.key}</li>
+                                ))}
+                            </ul>
+                         </div>
+                    )}
+
+                    {/* Warning: Integrity Drift (Mismatch) */}
+                    {mismatches.length > 0 && violations.length === 0 && isDebugMode && (
+                         <div className="bg-orange-500 border border-orange-400 rounded-lg px-3 py-2 text-[10px] font-mono text-white shadow-xl flex flex-col gap-1 max-w-[250px]">
                             <div className="flex items-center gap-2 font-bold uppercase tracking-wider border-b border-white/20 pb-1 mb-1">
                                 <ShieldAlert size={12} />
                                 Integrity Drift
                             </div>
                             <div className="opacity-80 leading-relaxed">
-                                {integrityIssues.length} preset(s) have changed since manifest generation.
+                                {mismatches.length} preset(s) have changed.
                             </div>
-                            <ul className="list-disc list-inside opacity-60">
-                                {integrityIssues.slice(0, 3).map(i => (
-                                    <li key={i.key} className="truncate">{i.key}</li>
-                                ))}
-                            </ul>
-                            <div className="text-[9px] opacity-50 mt-1 italic">Check console for new hashes</div>
+                            <div className="text-[9px] opacity-50 mt-1 italic">Update manifest if intentional.</div>
+                         </div>
+                    )}
+                    
+                    {/* Info: Missing Manifest */}
+                    {missing.length > 0 && violations.length === 0 && mismatches.length === 0 && isDebugMode && (
+                         <div className="bg-blue-500/20 backdrop-blur-md border border-blue-500/30 rounded-lg px-3 py-1.5 text-[10px] font-mono text-blue-200 max-w-[250px] flex items-center gap-2">
+                            <AlertTriangle size={12} />
+                            Manifest empty. Check console to populate.
                          </div>
                     )}
 

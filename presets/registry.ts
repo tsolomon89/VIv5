@@ -1,12 +1,14 @@
 
 import { PresentationPreset, PresetRegistry, SceneObject, ConfigState } from '../types';
-import { DEFAULT_CONFIG, mkParam, sliderImages, projects, createObj } from '../data';
+import { DEFAULT_CONFIG, mkParam, sliderImages } from '../data';
 
 // --- Helper for creating base objects within presets ---
+// Uses deterministic IDs for cleaner debugging, though hashing ignores them.
+let _presetObjCounter = 0;
 const base = (overrides: Partial<ConfigState>): SceneObject => ({
     ...JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
     ...overrides,
-    id: `preset-${Math.random().toString(36).substr(2, 5)}`,
+    id: `preset-obj-${++_presetObjCounter}`,
     isExpanded: false
 });
 
