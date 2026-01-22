@@ -72,7 +72,7 @@ export const DEFAULT_CONFIG: ConfigState = {
   rotateY: mkParam(0),
   rotateZ: mkParam(0),
 
-  // Marquee Props (Legacy)
+  // Marquee Props
   marqueeSpeed: mkParam(1.0),
   marqueeDirection: mkParam(1.0),
 
@@ -160,7 +160,7 @@ export const DEFAULT_CONFIG: ConfigState = {
   listPage: mkParam(0),
   listSpeed: mkParam(1.0),
   listDirection: mkParam(1.0),
-  listRadiusPattern: '', // New pattern string
+  listRadiusPattern: '', 
   
   marqueeHoverPause: true,
   itemHoverScale: mkParam(1.05),

@@ -1,9 +1,11 @@
 
-import React, { useState } from 'react';
-import { Menu, X, Power, Check, Copy, Download, LayoutTemplate, ChevronDown, PlusCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, X, Power, Check, Copy, Download, LayoutTemplate, ChevronDown, PlusCircle, ShieldAlert } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TEMPLATES } from '../../data';
 import { checkCoverage, getMissingSignaturesLabel } from '../../utils/coverage';
+import { checkPresetIntegrity, generateManifestLog } from '../../utils/integrity';
+import { PRESET_REGISTRY } from '../../presets/registry';
 
 interface HeaderProps {
     isNavOpen: boolean;
@@ -24,6 +26,14 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
     const [showTemplates, setShowTemplates] = useState(false);
     const coverage = checkCoverage();
+    const integrityIssues = checkPresetIntegrity(PRESET_REGISTRY);
+
+    // Dev Helper: Log manifest when in debug mode
+    useEffect(() => {
+        if (isDebugMode) {
+            generateManifestLog(PRESET_REGISTRY);
+        }
+    }, [isDebugMode]);
 
     return (
       <header className="fixed top-0 left-0 right-0 z-50 flex items-start justify-between px-6 py-6 mix-blend-difference text-white pointer-events-none">
@@ -35,9 +45,28 @@ export const Header: React.FC<HeaderProps> = ({
             <AnimatePresence>
               {hasUnlockedDebug && (
                 <div className="flex flex-col gap-4 items-end">
+                    {/* Integrity Alert */}
+                    {integrityIssues.length > 0 && isDebugMode && (
+                         <div className="bg-red-500 border border-red-400 rounded-lg px-3 py-2 text-[10px] font-mono text-white shadow-xl flex flex-col gap-1 max-w-[250px]">
+                            <div className="flex items-center gap-2 font-bold uppercase tracking-wider border-b border-white/20 pb-1 mb-1">
+                                <ShieldAlert size={12} />
+                                Integrity Drift
+                            </div>
+                            <div className="opacity-80 leading-relaxed">
+                                {integrityIssues.length} preset(s) have changed since manifest generation.
+                            </div>
+                            <ul className="list-disc list-inside opacity-60">
+                                {integrityIssues.slice(0, 3).map(i => (
+                                    <li key={i.key} className="truncate">{i.key}</li>
+                                ))}
+                            </ul>
+                            <div className="text-[9px] opacity-50 mt-1 italic">Check console for new hashes</div>
+                         </div>
+                    )}
+
                     {/* Coverage Alert */}
                     {coverage.missing.length > 0 && isDebugMode && (
-                        <div className="bg-red-500/20 backdrop-blur-md border border-red-500/30 rounded-lg px-3 py-1.5 text-[10px] font-mono text-red-200 max-w-[200px] text-right">
+                        <div className="bg-yellow-500/20 backdrop-blur-md border border-yellow-500/30 rounded-lg px-3 py-1.5 text-[10px] font-mono text-yellow-200 max-w-[200px] text-right">
                             Missing Presets: {getMissingSignaturesLabel(coverage.missing)}
                         </div>
                     )}

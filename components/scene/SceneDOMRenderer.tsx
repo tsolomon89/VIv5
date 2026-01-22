@@ -25,7 +25,7 @@ interface DOMItemProps {
 // --- Single Item Renderer ---
 const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = false }: DOMItemProps) => {
     const isCard = obj.shape === 'card';
-    const isTile = obj.shape === 'tile' || obj.shape === 'text'; 
+    const isTile = obj.shape === 'tile';
     
     // Base Transforms - Defaults: Scale 100 (1x), Opacity 1
     const x = getVal(obj.offsetX, scrollProgress, 0);
@@ -59,17 +59,17 @@ const SingleItemRenderer = ({ obj, scrollProgress, className = "", isChild = fal
     const cardMediaFit = obj.cardMediaFit || 'cover';
 
     // --- Tile Props ---
-    const Tag = (obj.tileTag || obj.textTag || 'div') as any;
-    const align = obj.tileAlign || obj.textAlign || 'center';
+    const Tag = (obj.tileTag || 'div') as any;
+    const align = obj.tileAlign || 'center';
     
     // Unified Leading Model
     const placement: LeadingPlacement = (obj.leadingPlacement as any) || 'none';
     const kind: LeadingKind = (obj.leadingKind as any) || 'icon';
     
-    const tileHeading = obj.tileHeading || obj.textHeading;
-    const tileLabel = obj.tileLabel || obj.textLabel;
-    const tileSubtitle = obj.tileSubtitle || obj.textSubtitle;
-    const tileTrailing = obj.tileTrailing || obj.textTrailing;
+    const tileHeading = obj.tileHeading;
+    const tileLabel = obj.tileLabel;
+    const tileSubtitle = obj.tileSubtitle;
+    const tileTrailing = obj.tileTrailing;
     const tileTrailingIcon = obj.tileTrailingIcon;
     
     // --- Style Construction ---

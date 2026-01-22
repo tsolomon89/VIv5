@@ -34,12 +34,8 @@ const getRenderConfig = (config: ConfigState, p: number): any => {
           // List Types
           k === 'listLayout' || k === 'listTemplate' || k === 'listItems' || k === 'clipWithinSection' ||
           k === 'containerOverflow' || k === 'itemOverflow' ||
-          // Legacy support
-          k === 'textHeading' || k === 'textLabel' || k === 'textSubtitle' || 
-          k === 'textTrailing' || k === 'textTrailingIcon' ||
-          k === 'textAlign' || k === 'textTag' ||
           // Marquee Specific
-          k === 'marqueeHoverPause' || k === 'marqueeHoverEffect'
+          k === 'marqueeHoverPause'
       ) {
         props[k] = config[k];
       } else {

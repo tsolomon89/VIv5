@@ -13,18 +13,41 @@ interface SectionRendererProps {
     setRef: (el: HTMLElement | null) => void;
 }
 
-// Recursive helper to find List objects and inject resolved binding data
+// Recursive helper to find List objects AND content Tiles to inject resolved binding data
 const injectBindingData = (obj: SceneObject, binding: Binding) => {
-    // If this object is a list and fits the binding criteria (related), inject data
-    if (obj.shape === 'list' && binding.kind === 'related') {
-        const dataItems = resolveBindingData(binding);
-        // Merge with existing items. 
-        obj.listItems = [...(obj.listItems || []), ...dataItems];
-        
-        // Ensure list template exists
-        if (!obj.listTemplate) {
-            obj.listTemplate = { shape: 'card' };
+    // 1. Resolve Data
+    const dataItems = resolveBindingData(binding);
+    const primaryItem = dataItems[0];
+
+    // 2. List Injection (Collection Mode)
+    if (obj.shape === 'list') {
+        if (dataItems.length > 0) {
+            // Merge with existing items. 
+            obj.listItems = [...(obj.listItems || []), ...dataItems];
+            
+            // Ensure list template exists
+            if (!obj.listTemplate) {
+                obj.listTemplate = { shape: 'card' };
+            }
         }
+    }
+    // 3. Single Item Injection (Hero/Detail Mode)
+    // If it's a content-capable shape (Tile/Card) and we have a primary data item,
+    // we inject the data into the object's properties.
+    else if ((obj.shape === 'tile' || obj.shape === 'card') && primaryItem) {
+        // Only inject if the object doesn't have explicit overrides?
+        // For v1, Binding is truth. We overwrite empty or default fields.
+        // We assume if the preset put a placeholder string, the data should replace it.
+        
+        if (primaryItem.tileHeading) obj.tileHeading = primaryItem.tileHeading;
+        if (primaryItem.tileSubtitle) obj.tileSubtitle = primaryItem.tileSubtitle;
+        if (primaryItem.tileLabel) obj.tileLabel = primaryItem.tileLabel;
+        if (primaryItem.tileTrailing) obj.tileTrailing = primaryItem.tileTrailing;
+        if (primaryItem.description) obj.tileSubtitle = primaryItem.description; // Fallback mapping
+        
+        // Media Injection
+        if (primaryItem.textureUrl && !obj.textureUrl) obj.textureUrl = primaryItem.textureUrl;
+        if (primaryItem.image && !obj.textureUrl) obj.textureUrl = primaryItem.image;
     }
     
     // Recurse children

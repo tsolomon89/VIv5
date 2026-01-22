@@ -29,7 +29,7 @@ interface EditorOverlayProps {
     // Structure Updates
     updateSectionHeight: (id: string, h: number) => void;
     updateSectionPinHeight: (id: string, h: number) => void;
-    updateSectionClassName?: (id: string, c: string) => void; // New optional
+    updateSectionClassName?: (id: string, c: string) => void;
     updateSectionBinding: (id: string, b: Binding) => void;
     updateSectionPlacement: (id: string, p: Placement) => void;
     updateSectionPresentation: (id: string, k: string) => void;
@@ -318,7 +318,7 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
                                                 <AddButton icon={<Box className="w-4 h-4" />} label="Cube" onClick={() => addSceneObject(activeSectionId, 'cube')} />
                                                 <AddButton icon={<Circle className="w-4 h-4" />} label="Sphere" onClick={() => addSceneObject(activeSectionId, 'sphere')} />
                                                 <AddButton icon={<Square className="w-4 h-4" />} label="Plane" onClick={() => addSceneObject(activeSectionId, 'plane')} />
-                                                <AddButton icon={<Type className="w-4 h-4" />} label="Tile" onClick={() => addSceneObject(activeSectionId, 'text')} />
+                                                <AddButton icon={<Type className="w-4 h-4" />} label="Tile" onClick={() => addSceneObject(activeSectionId, 'tile')} />
                                                 <AddButton icon={<CreditCard className="w-4 h-4" />} label="Card" onClick={() => addSceneObject(activeSectionId, 'card')} />
                                                 <AddButton icon={<List className="w-4 h-4" />} label="List" onClick={() => addSceneObject(activeSectionId, 'list')} />
                                                 <AddButton icon={<CloudLightning className="w-4 h-4" />} label="Lightning" onClick={() => addSceneObject(activeSectionId, 'lightning')} />

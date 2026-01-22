@@ -10,7 +10,7 @@ const base = (overrides: Partial<ConfigState>): SceneObject => ({
     isExpanded: false
 });
 
-// 1. HERO PRESET (4 Objects)
+// 1. HERO PRESET (5 Objects: 4 Geom + 1 Text)
 export const heroPreset: PresentationPreset = {
     key: 'self.hero.v1',
     signature: { kind: 'self' },
@@ -60,6 +60,18 @@ export const heroPreset: PresentationPreset = {
                 saturation: mkParam(1.1), rainbow: mkParam(1), density: mkParam(0.2),
                 opacity: mkParam(1), timeScale: mkParam(0.5),
                 offsetX: mkParam(100), offsetY: mkParam(0),
+            }),
+            // Added Text Tile for Binding Data Injection
+            base({
+                shape: 'tile',
+                tileAlign: 'center',
+                tileHeading: 'Brand Name', // Placeholder
+                tileSubtitle: 'Brand Description', // Placeholder
+                headingSize: mkParam(120),
+                headingColor: '#ffffff',
+                subColor: 'rgba(255,255,255,0.6)',
+                offsetY: mkParam(0),
+                offsetX: mkParam(0)
             })
         ]
     }

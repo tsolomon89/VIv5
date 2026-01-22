@@ -27,6 +27,7 @@ export default function App() {
       updateSectionBinding, 
       updateSectionPlacement,
       updateSectionPresentation,
+      updateSectionClassName,
       addSection,
       removeSection,
       importTemplate,
@@ -171,6 +172,7 @@ export default function App() {
         
         updateSectionHeight={updateSectionHeight}
         updateSectionPinHeight={updateSectionPinHeight}
+        updateSectionClassName={updateSectionClassName}
         updateSectionBinding={updateSectionBinding}
         updateSectionPlacement={updateSectionPlacement}
         updateSectionPresentation={updateSectionPresentation}

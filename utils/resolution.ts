@@ -47,63 +47,79 @@ const applyScope = (items: any[], scope?: BindingScope): any[] => {
 };
 
 export const resolveBindingData = (binding: Binding): any[] => {
-    if (binding.kind !== 'related') return [];
-
-    let rawData: any[] = [];
-
-    if (binding.target === 'product' || binding.target === 'feature') {
-        // Return projects mock
-        rawData = projects.map((p, i) => ({
-            id: `item-${i}`,
-            tileHeading: p.title,
-            tileSubtitle: p.category,
-            tileTrailing: p.year,
-            textureUrl: p.image,
-            cardMediaSrc: p.image,
-            // Fields for sorting
-            title: p.title,
-            year: p.year,
-            category: p.category
-        }));
-    } else if (binding.target === 'useCase') {
-        rawData = [
-            { tileHeading: 'Blob', leadingIcon: 'lucide:Circle', title: 'Blob' },
-            { tileHeading: 'Yallo!', leadingIcon: 'lucide:Hexagon', title: 'Yallo!' },
-            { tileHeading: 'Bliss+', leadingIcon: 'lucide:Square', title: 'Bliss+' },
-            { tileHeading: 'Flea', leadingIcon: 'lucide:Triangle', title: 'Flea' }
-        ];
-    } else if (binding.target === 'solution') {
-        rawData = [
-            { 
-                leadingIcon: 'lucide:Hexagon', 
-                tileHeading: 'Brand Identity', 
-                tileSubtitle: 'Crafting distinct visual languages that resonate with your audience and stand the test of time.',
-                title: 'Brand Identity'
-            },
-            { 
-                leadingIcon: 'lucide:Square', 
-                tileHeading: 'Digital Products', 
-                tileSubtitle: 'Building robust, scalable web applications with cutting-edge technologies and seamless UX.',
-                title: 'Digital Products'
-            },
-            { 
-                leadingIcon: 'lucide:Triangle', 
-                tileHeading: 'Motion Design', 
-                tileSubtitle: 'Bringing static interfaces to life with fluid animations and interactive 3D experiences.',
-                title: 'Motion Design'
-            }
-        ];
-    } else if (binding.cardinality === 'many') {
-        // Default mock for generic 'many'
-        rawData = Array.from({ length: 6 }).map((_, i) => ({
-            id: `gen-${i}`,
-            tileHeading: `Item ${i + 1}`,
-            tileSubtitle: 'Generated Content',
-            title: `Item ${i + 1}`
-        }));
+    // 1. Handle Self Binding (Stubbed Page Subject)
+    if (binding.kind === 'self') {
+        return [{
+            id: 'self-brand-identity',
+            title: 'Superdesign Studio', 
+            tileHeading: 'Superdesign®',
+            tileSubtitle: 'A digital design studio crafting experiences for the modern web.',
+            category: 'Brand',
+            year: '2024',
+            description: 'Based in Tokyo, working globally.'
+        }];
     }
 
-    return applyScope(rawData, binding.scope);
+    // 2. Handle Related Bindings
+    if (binding.kind === 'related') {
+        let rawData: any[] = [];
+
+        if (binding.target === 'product' || binding.target === 'feature') {
+            // Return projects mock
+            rawData = projects.map((p, i) => ({
+                id: `item-${i}`,
+                tileHeading: p.title,
+                tileSubtitle: p.category,
+                tileTrailing: p.year,
+                textureUrl: p.image,
+                cardMediaSrc: p.image,
+                // Fields for sorting
+                title: p.title,
+                year: p.year,
+                category: p.category
+            }));
+        } else if (binding.target === 'useCase') {
+            rawData = [
+                { tileHeading: 'Blob', leadingIcon: 'lucide:Circle', title: 'Blob' },
+                { tileHeading: 'Yallo!', leadingIcon: 'lucide:Hexagon', title: 'Yallo!' },
+                { tileHeading: 'Bliss+', leadingIcon: 'lucide:Square', title: 'Bliss+' },
+                { tileHeading: 'Flea', leadingIcon: 'lucide:Triangle', title: 'Flea' }
+            ];
+        } else if (binding.target === 'solution') {
+            rawData = [
+                { 
+                    leadingIcon: 'lucide:Hexagon', 
+                    tileHeading: 'Brand Identity', 
+                    tileSubtitle: 'Crafting distinct visual languages that resonate with your audience and stand the test of time.',
+                    title: 'Brand Identity'
+                },
+                { 
+                    leadingIcon: 'lucide:Square', 
+                    tileHeading: 'Digital Products', 
+                    tileSubtitle: 'Building robust, scalable web applications with cutting-edge technologies and seamless UX.',
+                    title: 'Digital Products'
+                },
+                { 
+                    leadingIcon: 'lucide:Triangle', 
+                    tileHeading: 'Motion Design', 
+                    tileSubtitle: 'Bringing static interfaces to life with fluid animations and interactive 3D experiences.',
+                    title: 'Motion Design'
+                }
+            ];
+        } else if (binding.cardinality === 'many') {
+            // Default mock for generic 'many'
+            rawData = Array.from({ length: 6 }).map((_, i) => ({
+                id: `gen-${i}`,
+                tileHeading: `Item ${i + 1}`,
+                tileSubtitle: 'Generated Content',
+                title: `Item ${i + 1}`
+            }));
+        }
+
+        return applyScope(rawData, binding.scope);
+    }
+
+    return [];
 };
 
 export const getSectionLabel = (section: SectionInstance): string => {

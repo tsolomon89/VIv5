@@ -51,7 +51,7 @@ export function ConfigControls({ config, onChange, headerOffset = 0, sectionHead
     const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
     
     // Determine if we are editing a standalone Card/Tile or if we are inside a List Template
-    const isStandaloneTile = config.shape === 'tile' || config.shape === 'text';
+    const isStandaloneTile = config.shape === 'tile';
     const isStandaloneCard = config.shape === 'card';
     const isStandalonePlane = config.shape === 'plane';
 

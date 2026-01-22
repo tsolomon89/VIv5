@@ -1,7 +1,7 @@
 
 import { ShapeType } from '../types';
 
-const DOM_SHAPES_SET = new Set<ShapeType>(['tile', 'card', 'text', 'list', 'group']);
+const DOM_SHAPES_SET = new Set<ShapeType>(['tile', 'card', 'list', 'group']);
 
 export const isDOMShape = (shape: ShapeType): boolean => {
     return DOM_SHAPES_SET.has(shape);

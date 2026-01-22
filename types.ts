@@ -1,9 +1,8 @@
 
-export type ShapeType = 'tetrahedron' | 'cube' | 'sphere' | 'cylinder' | 'torus' | 'column' | 'lightning' | 'atmosphere' | 'tile' | 'plane' | 'card' | 'text' | 'list' | 'group';
+export type ShapeType = 'tetrahedron' | 'cube' | 'sphere' | 'cylinder' | 'torus' | 'column' | 'lightning' | 'atmosphere' | 'tile' | 'plane' | 'card' | 'list' | 'group';
 export type AnimType = 'rotate' | 'hover' | '3drotate' | 'static' | 'marquee';
 
 // Collection Types
-export type CollectionMode = 'single' | 'collection';
 export type CollectionLayout = 'stack' | 'grid' | 'marquee';
 export type OverflowMode = 'visible' | 'clip';
 
@@ -33,7 +32,7 @@ export interface ConfigState {
   renderPolicy?: RenderPolicy;
 
   // Layout Dimensions
-  pinHeight?: number; // Distance the section stays pinned (viewport height if undefined?)
+  pinHeight?: number; 
   className?: string; // Visual container style (e.g. background color, border radius)
 
   // Prism Props
@@ -61,7 +60,7 @@ export interface ConfigState {
   rotateY: NumberParam;
   rotateZ: NumberParam;
 
-  // Marquee Props (Object Animation - Legacy)
+  // Marquee Props (Object Animation)
   marqueeSpeed: NumberParam;
   marqueeDirection: NumberParam;
 
@@ -81,7 +80,7 @@ export interface ConfigState {
   boltDuration: NumberParam;
   boltGlow: NumberParam;
   
-  // Tile Content (Renamed from Text)
+  // Tile Content
   tileHeading: string;
   tileLabel: string;
   tileSubtitle: string;
@@ -89,15 +88,6 @@ export interface ConfigState {
   tileTrailingIcon: string;
   tileAlign: 'left' | 'center' | 'right';
   tileTag: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'div';
-  
-  // Legacy Text Props (kept for compatibility in types, but deprecated)
-  textHeading?: string;
-  textLabel?: string;
-  textSubtitle?: string;
-  textTrailing?: string;
-  textTrailingIcon?: string;
-  textAlign?: 'left' | 'center' | 'right';
-  textTag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'div';
 
   // --- LEADING MODEL (Unified) ---
   leadingPlacement: LeadingPlacement;
@@ -182,18 +172,6 @@ export interface ConfigState {
   containerOverflow: OverflowMode;
   itemOverflow: OverflowMode;
   clipWithinSection: boolean; // If true, applies overflow hidden to container
-  
-  // Legacy props for compatibility (deprecated)
-  mode?: CollectionMode;
-  layout?: CollectionLayout;
-  items?: any[];
-  limit?: NumberParam;
-  itemsPerRow?: NumberParam;
-  rowsPerPage?: NumberParam;
-  page?: NumberParam;
-  gap?: NumberParam;
-  marqueeSpacing?: NumberParam;
-  marqueeHoverEffect?: 'none' | 'scale' | 'grayscale' | 'dim'; // Deprecated in favor of fine params
 }
 
 export interface SceneObject extends ConfigState {
