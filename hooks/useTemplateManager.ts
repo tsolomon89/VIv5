@@ -4,6 +4,7 @@ import { PageTemplate, SectionInstance, Binding, Placement, ShapeType, ConfigSta
 import { INITIAL_PAGE_TEMPLATE, TEMPLATES, mkParam, DEFAULT_CONFIG } from '../data';
 import { validatePageTemplate } from '../utils/validation';
 import { PRESET_REGISTRY } from '../presets/registry';
+import { matchesSignature } from '../utils/binding';
 
 const STORAGE_KEY = 'vi_page_template_v1';
 
@@ -47,7 +48,31 @@ export const useTemplateManager = () => {
     // --- Structural Updates ---
 
     const updateSectionBinding = (sectionId: string, binding: Binding) => {
-        updateSection(sectionId, { binding });
+        setTemplate(prev => {
+            return {
+                ...prev,
+                sections: prev.sections.map(s => {
+                    if (s.id !== sectionId) return s;
+                    
+                    // Check if current presentation is compatible with new binding
+                    const currentPreset = PRESET_REGISTRY[s.presentationKey];
+                    let newKey = s.presentationKey;
+                    
+                    // If incompatible, try to find a compatible one
+                    if (!currentPreset || !matchesSignature(binding, currentPreset.signature)) {
+                        const compatible = Object.values(PRESET_REGISTRY).find(p => matchesSignature(binding, p.signature));
+                        if (compatible) {
+                            newKey = compatible.key;
+                        } else {
+                            // Fallback to generic if nothing matches (safeguard)
+                            newKey = 'section.generic.v1'; 
+                        }
+                    }
+
+                    return { ...s, binding, presentationKey: newKey };
+                })
+            };
+        });
     };
 
     const updateSectionPlacement = (sectionId: string, placement: Placement) => {
@@ -98,6 +123,22 @@ export const useTemplateManager = () => {
                     overrides: {
                         ...s.overrides,
                         height: { ...safeParam(s.overrides?.height, height), value: height }
+                    }
+                };
+            })
+        }));
+    };
+
+    const updateSectionPinHeight = (sectionId: string, pinHeight: number) => {
+        setTemplate(prev => ({
+            ...prev,
+            sections: prev.sections.map(s => {
+                if (s.id !== sectionId) return s;
+                return {
+                    ...s,
+                    overrides: {
+                        ...s.overrides,
+                        pinHeight
                     }
                 };
             })
@@ -295,6 +336,7 @@ export const useTemplateManager = () => {
         updateSectionPlacement,
         updateSectionPresentation,
         updateSectionHeight,
+        updateSectionPinHeight,
         addSection,
         removeSection,
         // Content

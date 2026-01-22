@@ -13,6 +13,8 @@ import { useCheatCode } from './hooks/useCheatCode';
 import { useTemplateManager } from './hooks/useTemplateManager';
 import { DEFAULT_CONFIG } from './data';
 import { ConfigState } from './types';
+import { resolveSectionDimensions } from './utils/resolution';
+import { PRESET_REGISTRY } from './presets/registry';
 
 export default function App() {
   const { hasUnlockedDebug, isDebugMode, setIsDebugMode, flash, handleTouchStart, handleTouchEnd } = useCheatCode();
@@ -21,6 +23,7 @@ export default function App() {
   const {
       template, 
       updateSectionHeight,
+      updateSectionPinHeight,
       updateSectionBinding, 
       updateSectionPlacement,
       updateSectionPresentation,
@@ -70,9 +73,8 @@ export default function App() {
       template.sections.forEach(section => {
           const key = section.id;
           
-          // Basic v1 scroll height resolution: override > standard
-          const height = section.overrides?.height?.value || 1000;
-          const pinHeight = 800; // Standard pin
+          // Accurate v1 scroll math using presets
+          const { height, pinHeight } = resolveSectionDimensions(section, PRESET_REGISTRY);
 
           if (section.placement.slot === 'start') {
               // Standard Scroll for Hero
@@ -83,7 +85,9 @@ export default function App() {
               if (el) {
                   const rect = el.getBoundingClientRect();
                   const trackHeight = height;
-                  const effectivePinHeight = pinHeight || vH;
+                  // Use configured pinHeight or fallback to viewport height
+                  const effectivePinHeight = pinHeight || vH; 
+                  
                   const scrollDistance = Math.max(1, trackHeight - effectivePinHeight);
                   const scrolledPastStart = -rect.top;
                   newProgress[key] = scrolledPastStart / scrollDistance;
@@ -169,6 +173,7 @@ export default function App() {
         setViewMode={setViewMode}
         
         updateSectionHeight={updateSectionHeight}
+        updateSectionPinHeight={updateSectionPinHeight}
         updateSectionBinding={updateSectionBinding}
         updateSectionPlacement={updateSectionPlacement}
         updateSectionPresentation={updateSectionPresentation}

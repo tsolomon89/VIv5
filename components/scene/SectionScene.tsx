@@ -62,17 +62,21 @@ export const SectionScene = ({ objects, progress }: { objects: SceneObject[], pr
         flatObjects.filter(o => o.shape !== 'tile' && o.shape !== 'text' && o.shape !== 'card' && o.shape !== 'list' && o.shape !== 'group'),
     [flatObjects]);
     
-    // Marquee Objects (List with layout marquee)
+    // Marquee Objects (List with layout marquee AND policy=webgl)
     const marqueeObjects = useMemo(() => 
-        flatObjects.filter(o => o.shape === 'list' && o.listLayout === 'marquee'),
+        flatObjects.filter(o => 
+            o.shape === 'list' && 
+            o.listLayout === 'marquee' &&
+            o.renderPolicy?.renderer === 'webgl'
+        ),
     [flatObjects]);
 
     // DOM Objects - Passed strictly as top-level because DOMRenderer handles recursion itself
+    // We allow lists and groups here. The SceneDOMRenderer will skip WebGL marquees internally.
     const domObjects = useMemo(() => 
-        objects.filter(o => {
-            if (o.shape === 'list' && o.listLayout === 'marquee') return false;
-            return o.shape === 'tile' || o.shape === 'text' || o.shape === 'card' || o.shape === 'list' || o.shape === 'group';
-        }),
+        objects.filter(o => 
+            o.shape === 'tile' || o.shape === 'text' || o.shape === 'card' || o.shape === 'list' || o.shape === 'group'
+        ),
     [objects]);
 
     return (
@@ -82,7 +86,7 @@ export const SectionScene = ({ objects, progress }: { objects: SceneObject[], pr
                  <MarqueeRenderer key={obj.id} listObject={obj} scrollProgress={progress} />
              ))}
 
-             {/* 2. DOM Layer (Tile, Cards, Stack/Grid List) */}
+             {/* 2. DOM Layer (Tile, Cards, Stack/Grid List, DOM Marquee) */}
              <SceneDOMRenderer objects={domObjects} scrollProgress={progress} />
 
              {/* 3. WebGL Layer (Prism/Storm) */}

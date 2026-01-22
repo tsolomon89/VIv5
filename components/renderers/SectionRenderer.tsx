@@ -2,10 +2,10 @@
 import React, { useMemo } from 'react';
 import { SectionInstance, ConfigState, SceneObject, Binding } from '../../types';
 import { PRESET_REGISTRY } from '../../presets/registry';
-import { SectionChapter } from '../scene/SectionChapter';
+import { SectionFrame } from '../scene/SectionFrame';
 import { validateSection } from '../../utils/validation';
 import { ValidationNotice } from '../sections/ValidationNotice';
-import { resolveBindingData } from '../../utils/resolution';
+import { resolveBindingData, resolveSectionDimensions } from '../../utils/resolution';
 
 interface SectionRendererProps {
     section: SectionInstance;
@@ -18,7 +18,8 @@ const injectBindingData = (obj: SceneObject, binding: Binding) => {
     // If this object is a list and fits the binding criteria (related), inject data
     if (obj.shape === 'list' && binding.kind === 'related') {
         const dataItems = resolveBindingData(binding);
-        // Merge with existing items (e.g. from preset overrides or page template overrides)
+        // Merge with existing items. 
+        // Note: In v1, we append binding data to existing override items to allow hybrids.
         obj.listItems = [...(obj.listItems || []), ...dataItems];
         
         // Ensure list template exists
@@ -54,33 +55,34 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, progr
         isExpanded: false
     };
 
-    // Apply Instance Overrides (e.g. from PageTemplate)
+    // Apply Instance Overrides (Phase C2)
     if (section.overrides) {
-        // We merge top-level overrides. 
-        // For children/listItems, deep merging is complex, so we assume overrides might replace or append.
-        // For v1 simplicity, Object.assign is used for top-level props.
+        // Deep merge of top-level properties. 
+        // For nested structures like children, a simple assign replaces the array.
+        // This is consistent with v1 requirement: "overrides might replace or append".
         Object.assign(rootObj, section.overrides);
+        
+        // If overrides provided children, we need to ensure they have IDs
+        if (section.overrides.children) {
+             rootObj.children = section.overrides.children.map((c, i) => ({
+                 ...c,
+                 id: c.id || `override-child-${i}`
+             }));
+        }
     }
     
-    // 4. Data Injection
+    // 4. Data Injection (Phase D1)
     // Traverse the synthesized object tree and populate lists with binding data
     injectBindingData(rootObj, section.binding);
 
     const objects = [rootObj];
     
     // 5. Dimension Resolution
-    // In v1, we extract height/pinHeight from the root object params if they exist, 
-    // or fallback to defaults. 
-    // Note: ConfigState has 'height' as a NumberParam for Prism/Visuals.
-    // For Section layout height, we look at the NumberParam value.
-    const height = rootObj.height?.value && rootObj.height.value > 100 ? rootObj.height.value : 1000;
-    // PinHeight isn't in ConfigState explicitly for layout (it was legacy SectionConfig).
-    // We assume pinHeight is either standard or derived.
-    const pinHeight = 800; 
+    const { height, pinHeight } = resolveSectionDimensions(section, PRESET_REGISTRY);
 
-    // 6. Render
+    // 6. Render via SectionFrame (Phase L1)
     return (
-        <SectionChapter
+        <SectionFrame
             id={section.id}
             height={height}
             pinHeight={pinHeight}
@@ -88,9 +90,10 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, progr
             progress={progress}
             setRef={setRef}
             className={
-                section.id === 'use-cases-section' ? "bg-white rounded-t-3xl md:rounded-t-[4rem]" : 
-                section.id === 'cta-section' ? "bg-black" : 
-                section.id === 'solutions-section' ? "bg-neutral-50" : "bg-white"
+                // Legacy Background Handling (Temporary Migration Phase G2)
+                section.id.includes('use-case') ? "bg-white rounded-t-3xl md:rounded-t-[4rem]" : 
+                section.id.includes('cta') ? "bg-black" : 
+                section.id.includes('solution') ? "bg-neutral-50" : "bg-white"
             }
         />
     );

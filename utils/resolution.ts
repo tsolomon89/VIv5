@@ -1,5 +1,5 @@
 
-import { Binding, SceneObject, SectionConfig, SectionInstance } from '../types';
+import { Binding, SceneObject, SectionConfig, SectionInstance, PresetRegistry } from '../types';
 import { projects } from '../data';
 
 // Stub resolver to bridge the new data model with existing static data
@@ -79,12 +79,24 @@ export const getSectionLabel = (section: SectionInstance): string => {
     return `${slotLabel} • ${bindingLabel}`;
 };
 
-export const getLegacyKey = (sectionId: string): string => {
-    if (sectionId.includes('hero')) return 'hero';
-    if (sectionId.includes('use-cases')) return 'UseCases';
-    if (sectionId.includes('products')) return 'Products';
-    if (sectionId.includes('features')) return 'Features';
-    if (sectionId.includes('solutions')) return 'Solutions';
-    if (sectionId.includes('cta')) return 'CTA';
-    return 'hero'; // Fallback
+export const resolveSectionDimensions = (section: SectionInstance, registry: PresetRegistry): { height: number, pinHeight: number } => {
+    const preset = registry[section.presentationKey];
+    
+    // Default Fallbacks
+    let height = 1000;
+    let pinHeight = 800;
+
+    // 1. Preset Values
+    if (preset && preset.config) {
+        if (preset.config.height?.value) height = preset.config.height.value;
+        if (preset.config.pinHeight) pinHeight = preset.config.pinHeight;
+    }
+
+    // 2. Overrides
+    if (section.overrides) {
+        if (section.overrides.height?.value) height = section.overrides.height.value;
+        if (section.overrides.pinHeight) pinHeight = section.overrides.pinHeight;
+    }
+
+    return { height, pinHeight };
 };

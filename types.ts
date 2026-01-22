@@ -22,6 +22,7 @@ export type RenderPolicy = {
   virtualization?: "none" | "window";
   overscanPx?: number;
   maxItems?: number;
+  renderer?: 'dom' | 'webgl';
 };
 
 export interface ConfigState {
@@ -31,11 +32,14 @@ export interface ConfigState {
   // Render Policy
   renderPolicy?: RenderPolicy;
 
+  // Layout Dimensions
+  pinHeight?: number; // Distance the section stays pinned (viewport height if undefined?)
+
   // Common
   offsetZ: NumberParam;
 
   // Prism Props
-  height: NumberParam;
+  height: NumberParam; // Visual height (geometry) - distinct from layout height
   baseWidth: NumberParam;
   scale: NumberParam;
   glow: NumberParam;

@@ -299,13 +299,17 @@ const mergeConfig = (template: Partial<ConfigState>, override: any, index: numbe
 };
 
 const ListRenderer = ({ obj, scrollProgress }: DOMItemProps) => {
+    // RENDER POLICY APPLICATION
+    const policy = obj.renderPolicy || {};
+    
+    // Suppress if WebGL renderer is requested
+    if (policy.renderer === 'webgl') return null;
+
     const listLayout = obj.listLayout || 'stack';
     const template = obj.listTemplate || {};
     const overrides = obj.listItems || [];
     const gap = getVal(obj.listGap, scrollProgress, 24);
     
-    // RENDER POLICY APPLICATION
-    const policy = obj.renderPolicy || {};
     const maxItems = policy.maxItems || 100; // Default safety limit
     const rawCount = Math.max(0, Math.floor(getVal(obj.listCount, scrollProgress, 100)));
     const count = Math.min(rawCount, maxItems);
@@ -532,9 +536,9 @@ const DOMItem = (props: DOMItemProps) => {
 
 // --- Root Renderer ---
 export const SceneDOMRenderer = ({ objects, scrollProgress }: { objects: SceneObject[], scrollProgress: number }) => {
-    // Only render DOM-capable shapes
+    // Only render DOM-capable shapes (Added group)
     const validObjects = useMemo(() => 
-        objects.filter(o => ['tile', 'card', 'text', 'list'].includes(o.shape)), 
+        objects.filter(o => ['tile', 'card', 'text', 'list', 'group'].includes(o.shape)), 
     [objects]);
 
     return (

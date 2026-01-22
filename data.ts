@@ -44,6 +44,7 @@ export const mkParam = (val: number): NumberParam => ({ value: val, endValue: nu
 export const DEFAULT_CONFIG: ConfigState = {
   children: [],
   renderPolicy: { virtualization: 'window', overscanPx: 100 },
+  pinHeight: 800,
   
   // Prism Defaults
   height: mkParam(1),

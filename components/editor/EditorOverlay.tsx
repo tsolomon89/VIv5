@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings2, ChevronDown, ChevronUp, Layers, MoveVertical, Box, Triangle, Circle, Square, Type, CloudLightning, Cloud, Trash2, Copy, PanelTop, Plus, Info, X } from 'lucide-react';
+import { Settings2, ChevronDown, ChevronUp, Layers, MoveVertical, Box, Triangle, Circle, Square, Type, CloudLightning, Cloud, Trash2, Copy, PanelTop, Plus, Info, X, Pin } from 'lucide-react';
 import { FpsTracker } from '../FpsTracker';
 import { ConfigControls, AddButton, SectionHeader } from './ConfigControls';
 import { BindingControls } from './BindingControls';
@@ -28,6 +28,7 @@ interface EditorOverlayProps {
     
     // Structure Updates
     updateSectionHeight: (id: string, h: number) => void;
+    updateSectionPinHeight: (id: string, h: number) => void;
     updateSectionBinding: (id: string, b: Binding) => void;
     updateSectionPlacement: (id: string, p: Placement) => void;
     updateSectionPresentation: (id: string, k: string) => void;
@@ -96,6 +97,7 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
     viewMode,
     setViewMode,
     updateSectionHeight,
+    updateSectionPinHeight,
     updateSectionBinding,
     updateSectionPlacement,
     updateSectionPresentation,
@@ -115,8 +117,8 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
     const currentSectionInstance = template.sections.find(s => s.id === activeSectionId);
     
     // 2. Compute Effective Config (Preset + Overrides) for Display
-    const { effectiveConfig, activeObjects, sectionHeight } = useMemo(() => {
-        if (!currentSectionInstance) return { effectiveConfig: null, activeObjects: [], sectionHeight: 1000 };
+    const { effectiveConfig, activeObjects, sectionHeight, sectionPinHeight } = useMemo(() => {
+        if (!currentSectionInstance) return { effectiveConfig: null, activeObjects: [], sectionHeight: 1000, sectionPinHeight: 800 };
         
         const preset = PRESET_REGISTRY[currentSectionInstance.presentationKey];
         const base = preset ? JSON.parse(JSON.stringify(preset.config)) : {};
@@ -127,7 +129,8 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
         return {
             effectiveConfig: merged,
             activeObjects: merged.children || [],
-            sectionHeight: merged.height?.value || 1000
+            sectionHeight: merged.height?.value || 1000,
+            sectionPinHeight: merged.pinHeight || 800
         };
     }, [currentSectionInstance]);
 
@@ -268,6 +271,23 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
                                                     type="range" min="500" max={5000} step="50"
                                                     value={sectionHeight}
                                                     onChange={(e) => updateSectionHeight(activeSectionId, Number(e.target.value))}
+                                                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
+                                                />
+                                            </div>
+                                            
+                                            {/* Pin Height Control */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between text-white/60">
+                                                    <div className="flex items-center gap-2">
+                                                        <Pin className="w-3 h-3" />
+                                                        <span className="text-[10px] uppercase font-bold tracking-wider">Pin Height</span>
+                                                    </div>
+                                                    <span className="text-[10px]">{sectionPinHeight}px</span>
+                                                </div>
+                                                <input 
+                                                    type="range" min="100" max={2000} step="50"
+                                                    value={sectionPinHeight}
+                                                    onChange={(e) => updateSectionPinHeight(activeSectionId, Number(e.target.value))}
                                                     className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
                                                 />
                                             </div>

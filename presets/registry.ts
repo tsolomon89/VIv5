@@ -121,7 +121,7 @@ export const productMarqueePreset: PresentationPreset = {
         itemHoverGrayscale: mkParam(0.0),
         listSmoothness: mkParam(0.1),
         listRadiusPattern: '100px 0 0 0 | 0 100px 0 40px | 40px',
-        renderPolicy: { virtualization: 'window', overscanPx: 500, maxItems: 20 },
+        renderPolicy: { virtualization: 'window', overscanPx: 500, maxItems: 20, renderer: 'webgl' },
         listTemplate: {
             shape: 'card',
             cardWidth: mkParam(400),
