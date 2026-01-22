@@ -74,6 +74,8 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, setRe
     // 7. Extract Config for Frame
     const clip = rootObj.clipWithinSection ?? true;
     const className = rootObj.className || "bg-white"; // Default background
+    // Pass overscan from render policy if present, default 500
+    const overscan = rootObj.renderPolicy?.overscanPx ?? 500;
 
     // 8. Render via SectionFrame (Phase L1)
     return (
@@ -85,6 +87,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, setRe
             setRef={setRef}
             clip={clip}
             className={className}
+            overscanPx={overscan}
         />
     );
 };

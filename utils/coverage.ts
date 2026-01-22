@@ -7,7 +7,8 @@ export const REQUIRED_SIGNATURES: BindingSignature[] = [
     { kind: 'self' },
     { kind: 'related', target: 'product', cardinality: 'many' },
     { kind: 'related', target: 'useCase', cardinality: 'many' },
-    // Add others as we expand the app
+    { kind: 'related', target: 'feature', cardinality: 'many' },
+    { kind: 'related', target: 'solution', cardinality: 'many' },
 ];
 
 export interface CoverageReport {

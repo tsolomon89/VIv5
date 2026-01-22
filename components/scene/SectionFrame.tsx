@@ -13,6 +13,7 @@ interface SectionFrameProps {
     children?: React.ReactNode;
     className?: string;
     clip?: boolean;
+    overscanPx?: number;
 }
 
 /**
@@ -25,12 +26,12 @@ interface SectionFrameProps {
  * - Section-local progress calculation (Phase I2)
  */
 export const SectionFrame: React.FC<SectionFrameProps> = ({ 
-    id, height, pinHeight, objects, setRef, children, className = "", clip = true
+    id, height, pinHeight, objects, setRef, children, className = "", clip = true, overscanPx = 500
 }) => {
     const localRef = useRef<HTMLDivElement>(null);
     
-    // Phase I3: Visibility culling + generous overscan (500px) to prevent pop-in
-    const isVisible = useVisibility({ ref: localRef, rootMargin: '500px' }); 
+    // Phase I3: Visibility culling + configurable overscan to prevent pop-in
+    const isVisible = useVisibility({ ref: localRef, rootMargin: `${overscanPx}px` }); 
     
     const [progress, setProgress] = useState(0);
 

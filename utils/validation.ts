@@ -64,7 +64,26 @@ export const validatePageTemplate = (template: PageTemplate, registry: PresetReg
         });
     }
 
-    // 2. Check Sections
+    // 2. Check Slot Uniqueness
+    const startSections = template.sections.filter(s => s.placement.slot === 'start');
+    if (startSections.length > 1) {
+        errors.push({
+            sectionId: 'PAGE_ROOT',
+            message: `Multiple sections assigned to 'start' slot. Only one Hero allowed.`,
+            severity: 'warning'
+        });
+    }
+    
+    const endSections = template.sections.filter(s => s.placement.slot === 'end');
+    if (endSections.length > 1) {
+        errors.push({
+            sectionId: 'PAGE_ROOT',
+            message: `Multiple sections assigned to 'end' slot. Only one CTA allowed.`,
+            severity: 'warning'
+        });
+    }
+
+    // 3. Check Sections
     template.sections.forEach(section => {
         errors.push(...validateSection(section, registry));
     });
