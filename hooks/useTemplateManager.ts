@@ -144,6 +144,22 @@ export const useTemplateManager = () => {
             })
         }));
     };
+    
+    const updateSectionClassName = (sectionId: string, className: string) => {
+        setTemplate(prev => ({
+            ...prev,
+            sections: prev.sections.map(s => {
+                if (s.id !== sectionId) return s;
+                return {
+                    ...s,
+                    overrides: {
+                        ...s.overrides,
+                        className
+                    }
+                };
+            })
+        }));
+    };
 
     // --- Content/Scene Updates (Copy-on-Write) ---
 
@@ -337,6 +353,7 @@ export const useTemplateManager = () => {
         updateSectionPresentation,
         updateSectionHeight,
         updateSectionPinHeight,
+        updateSectionClassName,
         addSection,
         removeSection,
         // Content

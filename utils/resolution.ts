@@ -9,60 +9,101 @@ export interface ResolvedData {
     pinHeight: number;
 }
 
+type RelatedBinding = Extract<Binding, { kind: 'related' }>;
+type BindingScope = RelatedBinding['scope'];
+
+const applyScope = (items: any[], scope?: BindingScope): any[] => {
+    if (!scope) return items;
+    
+    let result = [...items];
+
+    // 1. Filter
+    if (scope.filter) {
+        const filters = Object.entries(scope.filter);
+        if (filters.length > 0) {
+            result = result.filter(item => {
+                return filters.every(([k, v]) => item[k] === v);
+            });
+        }
+    }
+
+    // 2. Sort
+    if (scope.sort) {
+        const field = scope.sort;
+        result.sort((a, b) => {
+            const valA = a[field] || '';
+            const valB = b[field] || '';
+            // Basic string comparison for demo
+            return valA.toString().localeCompare(valB.toString());
+        });
+    }
+
+    // 3. Limit
+    if (scope.limit && scope.limit > 0) {
+        result = result.slice(0, scope.limit);
+    }
+
+    return result;
+};
+
 export const resolveBindingData = (binding: Binding): any[] => {
     if (binding.kind !== 'related') return [];
 
+    let rawData: any[] = [];
+
     if (binding.target === 'product' || binding.target === 'feature') {
         // Return projects mock
-        return projects.map((p, i) => ({
+        rawData = projects.map((p, i) => ({
             id: `item-${i}`,
             tileHeading: p.title,
             tileSubtitle: p.category,
             tileTrailing: p.year,
             textureUrl: p.image,
-            cardMediaSrc: p.image
+            cardMediaSrc: p.image,
+            // Fields for sorting
+            title: p.title,
+            year: p.year,
+            category: p.category
         }));
-    }
-
-    if (binding.target === 'useCase') {
-        return [
-            { tileHeading: 'Blob', leadingIcon: 'lucide:Circle' },
-            { tileHeading: 'Yallo!', leadingIcon: 'lucide:Hexagon' },
-            { tileHeading: 'Bliss+', leadingIcon: 'lucide:Square' },
-            { tileHeading: 'Flea', leadingIcon: 'lucide:Triangle' }
+    } else if (binding.target === 'useCase') {
+        rawData = [
+            { tileHeading: 'Blob', leadingIcon: 'lucide:Circle', title: 'Blob' },
+            { tileHeading: 'Yallo!', leadingIcon: 'lucide:Hexagon', title: 'Yallo!' },
+            { tileHeading: 'Bliss+', leadingIcon: 'lucide:Square', title: 'Bliss+' },
+            { tileHeading: 'Flea', leadingIcon: 'lucide:Triangle', title: 'Flea' }
         ];
-    }
-
-    if (binding.target === 'solution') {
-        return [
+    } else if (binding.target === 'solution') {
+        rawData = [
             { 
                 leadingIcon: 'lucide:Hexagon', 
                 tileHeading: 'Brand Identity', 
-                tileSubtitle: 'Crafting distinct visual languages that resonate with your audience and stand the test of time.'
+                tileSubtitle: 'Crafting distinct visual languages that resonate with your audience and stand the test of time.',
+                title: 'Brand Identity'
             },
             { 
                 leadingIcon: 'lucide:Square', 
                 tileHeading: 'Digital Products', 
-                tileSubtitle: 'Building robust, scalable web applications with cutting-edge technologies and seamless UX.'
+                tileSubtitle: 'Building robust, scalable web applications with cutting-edge technologies and seamless UX.',
+                title: 'Digital Products'
             },
             { 
                 leadingIcon: 'lucide:Triangle', 
                 tileHeading: 'Motion Design', 
-                tileSubtitle: 'Bringing static interfaces to life with fluid animations and interactive 3D experiences.'
+                tileSubtitle: 'Bringing static interfaces to life with fluid animations and interactive 3D experiences.',
+                title: 'Motion Design'
             }
         ];
-    }
-
-    // Default mock for generic 'many'
-    if (binding.cardinality === 'many') {
-        return Array.from({ length: 6 }).map((_, i) => ({
+    } else if (binding.cardinality === 'many') {
+        // Default mock for generic 'many'
+        rawData = Array.from({ length: 6 }).map((_, i) => ({
             id: `gen-${i}`,
             tileHeading: `Item ${i + 1}`,
-            tileSubtitle: 'Generated Content'
+            tileSubtitle: 'Generated Content',
+            title: `Item ${i + 1}`
         }));
     }
 
-    return [];
+    return applyScope(rawData, binding.scope);
 };
 
 export const getSectionLabel = (section: SectionInstance): string => {

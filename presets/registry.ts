@@ -16,6 +16,7 @@ export const heroPreset: PresentationPreset = {
     signature: { kind: 'self' },
     config: {
         ...DEFAULT_CONFIG,
+        className: "bg-[#1A1A1B]", // Dark background for Hero
         shape: 'group', // Logical container
         children: [
             base({
@@ -70,6 +71,7 @@ export const useCaseGridPreset: PresentationPreset = {
     signature: { kind: 'related', target: 'useCase', cardinality: 'many' },
     config: {
         ...DEFAULT_CONFIG,
+        className: "bg-white",
         shape: 'group',
         children: [
             base({
@@ -108,6 +110,7 @@ export const productMarqueePreset: PresentationPreset = {
     signature: { kind: 'related', target: 'product', cardinality: 'many' },
     config: {
         ...DEFAULT_CONFIG,
+        className: "bg-white",
         shape: 'list',
         listLayout: 'marquee',
         listSpeed: mkParam(2.8), 
@@ -131,8 +134,6 @@ export const productMarqueePreset: PresentationPreset = {
             sizingMode: 'cover',
             cardRadius: '0px'
         },
-        // We override this in the PageTemplate to include specific images if needed, 
-        // but here we can rely on binding data injection.
     }
 };
 
@@ -142,6 +143,7 @@ export const featureGridPreset: PresentationPreset = {
     signature: { kind: 'related', target: 'feature', cardinality: 'many' },
     config: {
         ...DEFAULT_CONFIG,
+        className: "bg-white",
         shape: 'group',
         children: [
             base({
@@ -190,6 +192,7 @@ export const solutionGridPreset: PresentationPreset = {
     signature: { kind: 'related', target: 'solution', cardinality: 'many' },
     config: {
         ...DEFAULT_CONFIG,
+        className: "bg-neutral-50",
         shape: 'group',
         children: [
             base({
@@ -242,6 +245,7 @@ export const ctaPreset: PresentationPreset = {
     signature: { kind: 'self' },
     config: {
         ...DEFAULT_CONFIG,
+        className: "bg-black",
         shape: 'group',
         children: [
             base({

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Binding, EntityType } from '../../types';
 import { Link2, Database } from 'lucide-react';
 
@@ -12,6 +12,36 @@ const ENTITIES: EntityType[] = ['brand', 'product', 'feature', 'solution', 'useC
 
 export const BindingControls: React.FC<BindingControlsProps> = ({ binding, onChange }) => {
     const isSelf = binding.kind === 'self';
+    const [filterText, setFilterText] = useState('');
+
+    // Sync filter text when binding changes externally
+    useEffect(() => {
+        if (binding.kind === 'related' && binding.scope?.filter) {
+            setFilterText(JSON.stringify(binding.scope.filter));
+        } else {
+            setFilterText('');
+        }
+    }, [binding]);
+
+    const handleFilterBlur = () => {
+        if (!filterText.trim()) {
+            if (binding.kind === 'related' && binding.scope?.filter) {
+                const newScope = { ...binding.scope, filter: undefined };
+                onChange({ ...binding, scope: newScope } as any);
+            }
+            return;
+        }
+        try {
+            const filter = JSON.parse(filterText);
+            if (binding.kind === 'related') {
+                const newScope = { ...binding.scope, filter };
+                onChange({ ...binding, scope: newScope } as any);
+            }
+        } catch (e) {
+            // Invalid JSON, maybe show error or just ignore
+            console.warn("Invalid JSON in filter");
+        }
+    };
 
     return (
         <div className="space-y-4">
@@ -105,6 +135,18 @@ export const BindingControls: React.FC<BindingControlsProps> = ({ binding, onCha
                                     className="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs font-mono text-white focus:border-white/30 outline-none placeholder:text-white/20"
                                 />
                              </div>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-1">Filter (JSON)</label>
+                            <input 
+                                type="text" 
+                                value={filterText} 
+                                onChange={(e) => setFilterText(e.target.value)}
+                                onBlur={handleFilterBlur}
+                                placeholder='{"category": "Branding"}'
+                                className="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs font-mono text-white focus:border-white/30 outline-none placeholder:text-white/20"
+                            />
                         </div>
                     </div>
                 </div>

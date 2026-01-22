@@ -29,6 +29,7 @@ interface EditorOverlayProps {
     // Structure Updates
     updateSectionHeight: (id: string, h: number) => void;
     updateSectionPinHeight: (id: string, h: number) => void;
+    updateSectionClassName?: (id: string, c: string) => void; // New optional
     updateSectionBinding: (id: string, b: Binding) => void;
     updateSectionPlacement: (id: string, p: Placement) => void;
     updateSectionPresentation: (id: string, k: string) => void;
@@ -98,6 +99,7 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
     setViewMode,
     updateSectionHeight,
     updateSectionPinHeight,
+    updateSectionClassName,
     updateSectionBinding,
     updateSectionPlacement,
     updateSectionPresentation,
@@ -117,8 +119,8 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
     const currentSectionInstance = template.sections.find(s => s.id === activeSectionId);
     
     // 2. Compute Effective Config (Preset + Overrides) for Display
-    const { effectiveConfig, activeObjects, sectionHeight, sectionPinHeight } = useMemo(() => {
-        if (!currentSectionInstance) return { effectiveConfig: null, activeObjects: [], sectionHeight: 1000, sectionPinHeight: 800 };
+    const { effectiveConfig, activeObjects, sectionHeight, sectionPinHeight, sectionClassName } = useMemo(() => {
+        if (!currentSectionInstance) return { effectiveConfig: null, activeObjects: [], sectionHeight: 1000, sectionPinHeight: 800, sectionClassName: '' };
         
         const preset = PRESET_REGISTRY[currentSectionInstance.presentationKey];
         const base = preset ? JSON.parse(JSON.stringify(preset.config)) : {};
@@ -130,7 +132,8 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
             effectiveConfig: merged,
             activeObjects: merged.children || [],
             sectionHeight: merged.height?.value || 1000,
-            sectionPinHeight: merged.pinHeight || 800
+            sectionPinHeight: merged.pinHeight || 800,
+            sectionClassName: merged.className || "bg-white"
         };
     }, [currentSectionInstance]);
 
@@ -291,6 +294,20 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
                                                     className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
                                                 />
                                             </div>
+                                            
+                                            {/* Container Class Control */}
+                                            {updateSectionClassName && (
+                                                <div>
+                                                    <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-1">Container Class</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={sectionClassName} 
+                                                        onChange={(e) => updateSectionClassName(activeSectionId, e.target.value)}
+                                                        placeholder="bg-white"
+                                                        className="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs font-mono text-white focus:border-white/30 outline-none"
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Add Buttons */}
