@@ -227,7 +227,7 @@ export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
             binding: { kind: 'related', target: 'product', cardinality: 'many' },
             presentationKey: 'related.product.many.marquee.v1',
             overrides: { 
-                height: { value: 1800, endValue: null, isLinked: false }, // Increased height
+                height: { value: 2400, endValue: null, isLinked: false }, // Increased height
                 className: "bg-white",
                 // Inject specific images for marquee via listItems overrides
                 listItems: sliderImages.map(src => ({ textureUrl: src }))
@@ -240,7 +240,7 @@ export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
             binding: { kind: 'related', target: 'feature', cardinality: 'many' },
             presentationKey: 'related.feature.many.grid.v1',
             overrides: { 
-                height: { value: 2200, endValue: null, isLinked: false }, // Increased height significantly for 2-col grid
+                height: { value: 3200, endValue: null, isLinked: false }, // Increased height significantly for 2-col grid
                 className: "bg-white"
             } 
         },
@@ -251,7 +251,7 @@ export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
             binding: { kind: 'related', target: 'solution', cardinality: 'many' },
             presentationKey: 'related.solution.many.grid.v1',
             overrides: { 
-                height: { value: 1800, endValue: null, isLinked: false }, // Increased height
+                height: { value: 2600, endValue: null, isLinked: false }, // Increased height
                 className: "bg-neutral-50" // Migration of hardcoded style
             } 
         },
@@ -262,7 +262,7 @@ export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
             binding: { kind: 'self' },
             presentationKey: 'self.cta.v1',
             overrides: { 
-                height: { value: 1200, endValue: null, isLinked: false }, // Increased height
+                height: { value: 1600, endValue: null, isLinked: false }, // Increased height
                 className: "bg-black" // Migration of hardcoded style
             } 
         }

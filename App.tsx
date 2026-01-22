@@ -7,6 +7,7 @@ import { PageRenderer } from './components/renderers/PageRenderer';
 import { EditorOverlay } from './components/editor/EditorOverlay';
 import { Header } from './components/layout/Header';
 import { Navigation } from './components/layout/Navigation';
+import { AppShell } from './components/layout/AppShell';
 
 // Data & Hooks
 import { useCheatCode } from './hooks/useCheatCode';
@@ -15,6 +16,7 @@ import { DEFAULT_CONFIG } from './data';
 import { ConfigState } from './types';
 import { resolveSectionDimensions } from './utils/resolution';
 import { PRESET_REGISTRY } from './presets/registry';
+import { PreviewContext } from './contexts/PreviewContext';
 
 export default function App() {
   const { hasUnlockedDebug, isDebugMode, setIsDebugMode, flash, handleTouchStart, handleTouchEnd } = useCheatCode();
@@ -49,8 +51,13 @@ export default function App() {
 
   const [copySuccess, setCopySuccess] = useState(false);
   const [viewMode, setViewMode] = useState<'single' | 'multi'>('multi');
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isNavOpen, setIsNavOpen] = useState(false);
+  
+  // Sidebar State (New)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // Scroll Container State (New)
+  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null);
   
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const [sectionProgress, setSectionProgress] = useState<Record<string, number>>({});
@@ -68,7 +75,8 @@ export default function App() {
   // Note: Actual Rendering progress is now handled internally by SectionFrame.
   useEffect(() => {
     const handleScroll = () => {
-      const scrollY = window.scrollY;
+      if (!scrollContainer) return;
+      
       const vH = window.innerHeight;
       const newProgress: Record<string, number> = {};
 
@@ -93,12 +101,12 @@ export default function App() {
     };
     
     // Only run this high-frequency loop if debug mode is active
-    if (isDebugMode) {
-        window.addEventListener('scroll', handleScroll, { passive: true });
+    if (isDebugMode && scrollContainer) {
+        scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
         handleScroll(); 
-        return () => window.removeEventListener('scroll', handleScroll);
+        return () => scrollContainer.removeEventListener('scroll', handleScroll);
     }
-  }, [template, isDebugMode]); 
+  }, [template, isDebugMode, scrollContainer]); 
 
   const handleCopyConfig = async () => {
     try {
@@ -122,41 +130,9 @@ export default function App() {
       sectionRefs.current[id] = el;
   };
 
-  return (
-    <div className={`w-full min-h-screen relative font-sans text-white transition-colors duration-500 bg-[#1A1A1B]`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      
-      <AnimatePresence>
-          {flash && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-yellow-500/50 mix-blend-overlay pointer-events-none" />
-          )}
-      </AnimatePresence>
-
-      <Header 
-        isNavOpen={isNavOpen} 
-        setIsNavOpen={setIsNavOpen} 
-        hasUnlockedDebug={hasUnlockedDebug} 
-        isDebugMode={isDebugMode} 
-        setIsDebugMode={setIsDebugMode} 
-        onCopyConfig={handleCopyConfig} 
-        onImportConfig={handleImportConfig}
-        onLoadTemplate={loadTemplate}
-        onCreatePage={createBlankPage}
-        copySuccess={copySuccess} 
-      />
-      
-      <Navigation isOpen={isNavOpen} />
-      
-      {/* --- Main Content (Compiler Output) --- */}
-      <main className="relative w-full">
-         <div className="relative z-20 shadow-[0_-50px_100px_rgba(0,0,0,0.5)]">
-            <PageRenderer 
-                template={template} 
-                setSectionRef={setSectionRef}
-            />
-         </div>
-      </main>
-
-      {/* --- Editor --- */}
+  // Construct Sidebar content to pass to shell
+  // We only render the editor if debug mode is ON
+  const sidebarContent = isDebugMode ? (
       <EditorOverlay
         isDebugMode={isDebugMode}
         activeSectionId={activeSectionId}
@@ -165,8 +141,6 @@ export default function App() {
         template={template}
         
         sectionProgress={sectionProgress}
-        isPanelOpen={isPanelOpen}
-        setIsPanelOpen={setIsPanelOpen}
         viewMode={viewMode}
         setViewMode={setViewMode}
         
@@ -188,11 +162,61 @@ export default function App() {
         duplicateSceneObject={duplicateSceneObjectInSection}
         toggleSceneObject={toggleSceneObjectInSection}
       />
+  ) : (
+      <div className="flex flex-col items-center justify-center h-full text-white/20 italic text-sm">
+          <span>Creator Mode Disabled</span>
+      </div>
+  );
+
+  return (
+    <div className={`w-full min-h-screen relative font-sans text-white transition-colors duration-500 bg-[#1A1A1B]`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      
+      <AnimatePresence>
+          {flash && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-yellow-500/50 mix-blend-overlay pointer-events-none" />
+          )}
+      </AnimatePresence>
+
+      <Header 
+        isNavOpen={isNavOpen} 
+        setIsNavOpen={setIsNavOpen} 
+        hasUnlockedDebug={hasUnlockedDebug} 
+        isDebugMode={isDebugMode} 
+        setIsDebugMode={setIsDebugMode} 
+        onCopyConfig={handleCopyConfig} 
+        onImportConfig={handleImportConfig}
+        onLoadTemplate={loadTemplate}
+        onCreatePage={createBlankPage}
+        copySuccess={copySuccess} 
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />
+      
+      <Navigation isOpen={isNavOpen} />
+      
+      {/* App Shell wraps the content and sidebar */}
+      <PreviewContext.Provider value={{ scrollContainer }}>
+          <AppShell 
+            isSidebarOpen={isSidebarOpen}
+            sidebarContent={sidebarContent}
+            setScrollContainer={setScrollContainer}
+          >
+            <main className="relative w-full">
+                <div className="relative z-20 shadow-[0_-50px_100px_rgba(0,0,0,0.5)]">
+                    <PageRenderer 
+                        template={template} 
+                        setSectionRef={setSectionRef}
+                    />
+                </div>
+            </main>
+          </AppShell>
+      </PreviewContext.Provider>
       
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
       `}</style>
     </div>
   );

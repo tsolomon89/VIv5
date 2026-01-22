@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Power, Check, Copy, Download, LayoutTemplate, ChevronDown, PlusCircle, ShieldAlert, Lock, AlertTriangle } from 'lucide-react';
+import { Menu, X, Power, Check, Copy, Download, LayoutTemplate, ChevronDown, PlusCircle, ShieldAlert, Lock, AlertTriangle, PanelRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TEMPLATES } from '../../data';
 import { checkCoverage, getMissingSignaturesLabel } from '../../utils/coverage';
@@ -18,11 +18,15 @@ interface HeaderProps {
     onLoadTemplate?: (id: string) => void;
     onCreatePage?: () => void; 
     copySuccess: boolean;
+    // New props for sidebar
+    isSidebarOpen: boolean;
+    setIsSidebarOpen: (val: boolean) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
     isNavOpen, setIsNavOpen, hasUnlockedDebug, isDebugMode, setIsDebugMode, 
-    onCopyConfig, onImportConfig, onLoadTemplate, onCreatePage, copySuccess 
+    onCopyConfig, onImportConfig, onLoadTemplate, onCreatePage, copySuccess,
+    isSidebarOpen, setIsSidebarOpen
 }) => {
     const [showTemplates, setShowTemplates] = useState(false);
     const coverage = checkCoverage();
@@ -171,9 +175,27 @@ export const Header: React.FC<HeaderProps> = ({
                           </motion.button>
                       </div>
                     )}
-                    <motion.button initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} onClick={() => setIsDebugMode(!isDebugMode)} className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 cursor-pointer ${isDebugMode ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.4)]' : 'bg-white/10 text-white/50 hover:bg-white/20 hover:text-white'}`} title={`Developer Mode ${isDebugMode ? 'ON' : 'OFF'}`}>
-                        <Power size={20} strokeWidth={2} />
-                    </motion.button>
+                    
+                    <div className="flex gap-2">
+                        {/* Sidebar Toggle */}
+                        <motion.button 
+                            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} 
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                            className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 cursor-pointer ${isSidebarOpen ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'bg-white/10 text-white/50 hover:bg-white/20 hover:text-white'}`} 
+                            title="Toggle Creator Sidebar"
+                        >
+                            <PanelRight size={20} strokeWidth={2} />
+                        </motion.button>
+
+                        <motion.button 
+                            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} 
+                            onClick={() => setIsDebugMode(!isDebugMode)} 
+                            className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 cursor-pointer ${isDebugMode ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.4)]' : 'bg-white/10 text-white/50 hover:bg-white/20 hover:text-white'}`} 
+                            title={`Developer Mode ${isDebugMode ? 'ON' : 'OFF'}`}
+                        >
+                            <Power size={20} strokeWidth={2} />
+                        </motion.button>
+                    </div>
                 </div>
               )}
             </AnimatePresence>

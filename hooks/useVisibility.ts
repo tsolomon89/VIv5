@@ -3,11 +3,12 @@ import { useState, useEffect, RefObject } from 'react';
 
 interface UseVisibilityProps {
     ref: RefObject<HTMLElement>;
+    root?: HTMLElement | null;
     rootMargin?: string;
     threshold?: number | number[];
 }
 
-export const useVisibility = ({ ref, rootMargin = '0px', threshold = 0 }: UseVisibilityProps) => {
+export const useVisibility = ({ ref, root = null, rootMargin = '0px', threshold = 0 }: UseVisibilityProps) => {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -16,6 +17,7 @@ export const useVisibility = ({ ref, rootMargin = '0px', threshold = 0 }: UseVis
         const observer = new IntersectionObserver(([entry]) => {
             setIsVisible(entry.isIntersecting);
         }, {
+            root,
             rootMargin,
             threshold
         });
@@ -25,7 +27,7 @@ export const useVisibility = ({ ref, rootMargin = '0px', threshold = 0 }: UseVis
         return () => {
             observer.disconnect();
         };
-    }, [ref, rootMargin, threshold]);
+    }, [ref, root, rootMargin, threshold]);
 
     return isVisible;
 };

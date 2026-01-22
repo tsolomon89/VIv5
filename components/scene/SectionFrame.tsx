@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { SectionScene } from './SectionScene';
 import { SceneObject } from '../../types';
 import { useVisibility } from '../../hooks/useVisibility';
+import { usePreview } from '../../contexts/PreviewContext';
 
 interface SectionFrameProps {
     id: string;
@@ -29,9 +30,16 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({
     id, height, pinHeight, objects, setRef, children, className = "", clip = true, overscanPx = 500
 }) => {
     const localRef = useRef<HTMLDivElement>(null);
+    const { scrollContainer } = usePreview();
     
     // Phase I3: Visibility culling + configurable overscan to prevent pop-in
-    const isVisible = useVisibility({ ref: localRef, rootMargin: `${overscanPx}px` }); 
+    // We pass scrollContainer as root if available, though null (viewport) is often sufficient 
+    // unless scaling/clipping applies.
+    const isVisible = useVisibility({ 
+        ref: localRef, 
+        root: scrollContainer,
+        rootMargin: `${overscanPx}px` 
+    }); 
     
     const [progress, setProgress] = useState(0);
 
@@ -64,13 +72,18 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({
         };
 
         // Performance: Only attach scroll listener if we are close to viewport
-        if (isVisible) {
-            window.addEventListener('scroll', handleScroll, { passive: true });
+        // IMPORTANT: Attach to the scrollContainer, not window
+        if (isVisible && scrollContainer) {
+            scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
             handleScroll(); // Initial calculation
         }
         
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [isVisible, height, pinHeight]);
+        return () => {
+            if (scrollContainer) {
+                scrollContainer.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, [isVisible, height, pinHeight, scrollContainer]);
 
     // Clamp progress for rendering scene (safety against out-of-bounds inputs)
     const clampedProgress = Math.max(0, Math.min(1, progress));
