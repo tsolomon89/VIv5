@@ -6,6 +6,7 @@ import { SectionFrame } from '../scene/SectionFrame';
 import { validateSection } from '../../utils/validation';
 import { ValidationNotice } from '../sections/ValidationNotice';
 import { resolveBindingData, resolveSectionDimensions } from '../../utils/resolution';
+import { applyOverrides } from '../../utils/overrides';
 
 interface SectionRendererProps {
     section: SectionInstance;
@@ -46,44 +47,40 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, setRe
     // Deep clone config to serve as the root object template
     const baseConfig = JSON.parse(JSON.stringify(preset.config)) as ConfigState;
 
-    // 3. Object Synthesis
-    // Create the root object from the preset config
+    // 3. Apply Overrides (Phase C2)
+    // We merge the preset config with the section overrides to get the effective config
+    const effectiveConfig = applyOverrides(baseConfig, section.overrides || {});
+
+    // 4. Object Synthesis
+    // Create the root object from the effective config
     const rootObj: SceneObject = {
-        ...baseConfig,
+        ...effectiveConfig,
         id: `synth-${section.id}-root`,
         isExpanded: false
     };
-
-    // Apply Instance Overrides (Phase C2)
-    if (section.overrides) {
-        // Deep merge of top-level properties. 
-        // For nested structures like children, a simple assign replaces the array.
-        // This is consistent with v1 requirement: "overrides might replace or append".
-        Object.assign(rootObj, section.overrides);
-        
-        // If overrides provided children, we need to ensure they have IDs
-        if (section.overrides.children) {
-             rootObj.children = section.overrides.children.map((c, i) => ({
-                 ...c,
-                 id: c.id || `override-child-${i}`
-             }));
-        }
+    
+    // Ensure ID for children if they were replaced/overridden
+    if (rootObj.children) {
+         rootObj.children = rootObj.children.map((c, i) => ({
+             ...c,
+             id: c.id || `child-${section.id}-${i}`
+         }));
     }
     
-    // 4. Data Injection (Phase D1)
+    // 5. Data Injection (Phase D1)
     // Traverse the synthesized object tree and populate lists with binding data
     injectBindingData(rootObj, section.binding);
 
     const objects = [rootObj];
     
-    // 5. Dimension Resolution
+    // 6. Dimension Resolution
+    // Use helper to resolve layout height/pinHeight (it respects overrides internally)
     const { height, pinHeight } = resolveSectionDimensions(section, PRESET_REGISTRY);
 
-    // 6. Extract Config for Frame
-    // Respect the configuration for clipping (defaults to true in data.ts)
+    // 7. Extract Config for Frame
     const clip = rootObj.clipWithinSection ?? true;
 
-    // 7. Render via SectionFrame (Phase L1)
+    // 8. Render via SectionFrame (Phase L1)
     return (
         <SectionFrame
             id={section.id}
