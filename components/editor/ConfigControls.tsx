@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { ConfigState, LeadingKind, LeadingPlacement, ShapeType, CollectionLayout, NumberParam } from '../../types';
 import { ControlSlider } from './ControlSlider';
-import { Image as ImageIcon, LayoutGrid, List as ListIcon, MoveRight, Type, CreditCard, AlignLeft, AlignCenter, AlignRight, PauseCircle, BoxSelect, Plus, Trash2, Edit2, ChevronLeft, Play, MousePointer2, Palette } from 'lucide-react';
+import { Image as ImageIcon, LayoutGrid, List as ListIcon, MoveRight, Type, CreditCard, AlignLeft, AlignCenter, AlignRight, PauseCircle, BoxSelect, Plus, Trash2, Edit2, ChevronLeft, Play, MousePointer2, Palette, Monitor } from 'lucide-react';
 import { getIconList } from '../../utils/iconRegistry';
 
 // Helper for safe params in templates
@@ -493,6 +493,66 @@ export function ConfigControls({ config, onChange, headerOffset = 0, sectionHead
                     {config.listLayout === 'grid' && (
                         <ControlSlider label="Columns" param={safeParam(config.listColumns, 3)} min={1} max={6} step={1} onChange={(v) => onChange('listColumns', v)} />
                     )}
+                    
+                    {/* Render Policy Controls (New) */}
+                    <div className="space-y-5">
+                         <SectionHeader title="Render Policy" top={headerOffset} className={sectionHeaderClass} />
+                         <div className="p-3 bg-white/5 rounded-xl space-y-4 border border-white/5">
+                             <div>
+                                 <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-2 flex items-center gap-2">
+                                     <Monitor className="w-3.5 h-3.5" />
+                                     Renderer Engine
+                                 </label>
+                                 <div className="flex bg-black/40 p-1 rounded-xl border border-white/10">
+                                     {['dom', 'webgl'].map((r) => (
+                                         <button 
+                                             key={r}
+                                             onClick={() => onChange('renderPolicy', { ...config.renderPolicy, renderer: r })}
+                                             className={`flex-1 py-1.5 rounded-lg text-[10px] font-medium transition-all uppercase ${config.renderPolicy?.renderer === r ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/70'}`}
+                                         >
+                                             {r}
+                                         </button>
+                                     ))}
+                                 </div>
+                             </div>
+                             
+                             <div>
+                                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-2">Virtualization</label>
+                                <div className="flex bg-black/40 p-1 rounded-xl border border-white/10">
+                                     {['none', 'window'].map((v) => (
+                                         <button 
+                                             key={v}
+                                             onClick={() => onChange('renderPolicy', { ...config.renderPolicy, virtualization: v })}
+                                             className={`flex-1 py-1.5 rounded-lg text-[10px] font-medium transition-all uppercase ${config.renderPolicy?.virtualization === v ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/70'}`}
+                                         >
+                                             {v}
+                                         </button>
+                                     ))}
+                                 </div>
+                             </div>
+                             
+                             <div className="grid grid-cols-2 gap-3">
+                                 <div>
+                                    <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-1">Overscan (px)</label>
+                                    <input 
+                                        type="number" 
+                                        value={config.renderPolicy?.overscanPx ?? 100}
+                                        onChange={(e) => onChange('renderPolicy', { ...config.renderPolicy, overscanPx: parseInt(e.target.value) })}
+                                        className="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs font-mono text-white focus:border-white/30 outline-none"
+                                    />
+                                 </div>
+                                 <div>
+                                    <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-1">Max Items</label>
+                                    <input 
+                                        type="number" 
+                                        value={config.renderPolicy?.maxItems ?? 100}
+                                        onChange={(e) => onChange('renderPolicy', { ...config.renderPolicy, maxItems: parseInt(e.target.value) })}
+                                        className="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs font-mono text-white focus:border-white/30 outline-none"
+                                    />
+                                 </div>
+                             </div>
+                         </div>
+                    </div>
                     
                     {/* EXHAUSTIVE MARQUEE CONTROLS */}
                     {config.listLayout === 'marquee' && (

@@ -11,26 +11,25 @@ interface PageRendererProps {
 export const PageRenderer: React.FC<PageRendererProps> = ({ template, setSectionRef }) => {
     
     // Sort Sections based on Placement Slot and Order
+    // Enforce C1: At most one start and one end section
     const sortedSections = useMemo(() => {
-        const startSections: SectionInstance[] = [];
-        const endSections: SectionInstance[] = [];
-        const freeSections: SectionInstance[] = [];
+        // Find FIRST start section
+        const startSection = template.sections.find(s => s.placement.slot === 'start');
+        
+        // Find FIRST end section (or should it be last? usually one exists)
+        const endSection = template.sections.find(s => s.placement.slot === 'end');
+        
+        // Collect all free sections and sort them
+        const freeSections = template.sections
+            .filter(s => s.placement.slot === 'free')
+            .sort((a, b) => (a.placement.order || 0) - (b.placement.order || 0));
 
-        template.sections.forEach(section => {
-            if (section.placement.slot === 'start') {
-                startSections.push(section);
-            } else if (section.placement.slot === 'end') {
-                endSections.push(section);
-            } else {
-                freeSections.push(section);
-            }
-        });
-
-        // Sort free sections by order
-        freeSections.sort((a, b) => (a.placement.order || 0) - (b.placement.order || 0));
-
-        // Start -> Free -> End
-        return [...startSections, ...freeSections, ...endSections];
+        const result: SectionInstance[] = [];
+        if (startSection) result.push(startSection);
+        result.push(...freeSections);
+        if (endSection) result.push(endSection);
+        
+        return result;
     }, [template]);
 
     return (

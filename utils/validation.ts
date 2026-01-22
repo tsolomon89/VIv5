@@ -8,6 +8,8 @@ export interface ValidationError {
     severity: 'error' | 'warning';
 }
 
+const VERSION_REGEX = /\.v\d+$/;
+
 export const validateSection = (section: SectionInstance, registry: PresetRegistry): ValidationError[] => {
     const errors: ValidationError[] = [];
     const preset = registry[section.presentationKey];
@@ -28,6 +30,15 @@ export const validateSection = (section: SectionInstance, registry: PresetRegist
             sectionId: section.id,
             message: `Binding incompatibility: Section binds to '${section.binding.kind}' but preset '${section.presentationKey}' expects '${preset.signature.kind}'.`,
             severity: 'error'
+        });
+    }
+
+    // 3. Check Versioning Convention
+    if (!VERSION_REGEX.test(section.presentationKey)) {
+        errors.push({
+            sectionId: section.id,
+            message: `Presentation Key '${section.presentationKey}' does not follow the '.vN' versioning suffix convention.`,
+            severity: 'warning'
         });
     }
 

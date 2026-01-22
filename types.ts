@@ -34,9 +34,7 @@ export interface ConfigState {
 
   // Layout Dimensions
   pinHeight?: number; // Distance the section stays pinned (viewport height if undefined?)
-
-  // Common
-  offsetZ: NumberParam;
+  className?: string; // Visual container style (e.g. background color, border radius)
 
   // Prism Props
   height: NumberParam; // Visual height (geometry) - distinct from layout height
@@ -54,6 +52,7 @@ export interface ConfigState {
   inertia: NumberParam;
   offsetX: NumberParam;
   offsetY: NumberParam;
+  offsetZ: NumberParam;
   saturation: NumberParam;
   rainbow: NumberParam;
   density: NumberParam;
@@ -140,7 +139,7 @@ export interface ConfigState {
   cardPadding: NumberParam;
   cardBorder: string; // CSS Border string (Legacy DOM)
   
-  // Card M3 New Props (WebGL Supported)
+  // Card M3 New Defaults
   cardElevation: NumberParam; // 0-5 Shadow Level
   cardOpacity: NumberParam; // Surface Opacity
   cardClip: boolean; // Overflow clip

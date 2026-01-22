@@ -6,6 +6,7 @@ import { SceneDOMRenderer } from './SceneDOMRenderer';
 import { MarqueeRenderer } from './MarqueeRenderer'; 
 import { SceneObject, NumberParam, ConfigState } from '../../types';
 import { flattenScene } from '../../utils/scene';
+import { isWebGLShape, isDOMShape } from '../../utils/shapes';
 
 // Interpolation Helper
 const getRenderValue = (param: NumberParam, p: number): number => {
@@ -57,9 +58,9 @@ export const SectionScene = ({ objects, progress }: { objects: SceneObject[], pr
     // Flatten hierarchy for WebGL/Marquee processing
     const flatObjects = useMemo(() => flattenScene(objects), [objects]);
     
-    // WebGL Objects (Prism, Storm)
+    // WebGL Objects (Prism, Storm, Planes)
     const webglObjects = useMemo(() => 
-        flatObjects.filter(o => o.shape !== 'tile' && o.shape !== 'text' && o.shape !== 'card' && o.shape !== 'list' && o.shape !== 'group'),
+        flatObjects.filter(o => isWebGLShape(o.shape)),
     [flatObjects]);
     
     // Marquee Objects (List with layout marquee AND policy=webgl)
@@ -74,9 +75,7 @@ export const SectionScene = ({ objects, progress }: { objects: SceneObject[], pr
     // DOM Objects - Passed strictly as top-level because DOMRenderer handles recursion itself
     // We allow lists and groups here. The SceneDOMRenderer will skip WebGL marquees internally.
     const domObjects = useMemo(() => 
-        objects.filter(o => 
-            o.shape === 'tile' || o.shape === 'text' || o.shape === 'card' || o.shape === 'list' || o.shape === 'group'
-        ),
+        objects.filter(o => isDOMShape(o.shape)),
     [objects]);
 
     return (

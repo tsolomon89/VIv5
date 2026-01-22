@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Binding, EntityType } from '../../types';
-import { Link2, Database, Users } from 'lucide-react';
+import { Link2, Database } from 'lucide-react';
 
 interface BindingControlsProps {
     binding: Binding;
@@ -61,6 +61,50 @@ export const BindingControls: React.FC<BindingControlsProps> = ({ binding, onCha
                                     {card}
                                 </button>
                             ))}
+                        </div>
+                    </div>
+
+                    {/* Advanced Scope Controls */}
+                    <div className="pt-2 border-t border-white/5 space-y-3">
+                        <div>
+                            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-1">Relation Key (Optional)</label>
+                            <input 
+                                type="text" 
+                                value={binding.relationKey || ''} 
+                                onChange={(e) => onChange({ ...binding, relationKey: e.target.value } as any)}
+                                placeholder="e.g. 'featured', 'latest'"
+                                className="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs font-mono text-white focus:border-white/30 outline-none placeholder:text-white/20"
+                            />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                             <div>
+                                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-1">Limit</label>
+                                <input 
+                                    type="number" 
+                                    value={binding.scope?.limit || ''} 
+                                    onChange={(e) => {
+                                        const limit = parseInt(e.target.value);
+                                        const newScope = { ...binding.scope, limit: isNaN(limit) ? undefined : limit };
+                                        onChange({ ...binding, scope: newScope } as any);
+                                    }}
+                                    placeholder="All"
+                                    className="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs font-mono text-white focus:border-white/30 outline-none placeholder:text-white/20"
+                                />
+                             </div>
+                             <div>
+                                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-1">Sort Field</label>
+                                <input 
+                                    type="text" 
+                                    value={binding.scope?.sort || ''} 
+                                    onChange={(e) => {
+                                        const newScope = { ...binding.scope, sort: e.target.value || undefined };
+                                        onChange({ ...binding, scope: newScope } as any);
+                                    }}
+                                    placeholder="date, title"
+                                    className="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs font-mono text-white focus:border-white/30 outline-none placeholder:text-white/20"
+                                />
+                             </div>
                         </div>
                     </div>
                 </div>

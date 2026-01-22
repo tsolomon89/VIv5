@@ -19,7 +19,6 @@ const injectBindingData = (obj: SceneObject, binding: Binding) => {
     if (obj.shape === 'list' && binding.kind === 'related') {
         const dataItems = resolveBindingData(binding);
         // Merge with existing items. 
-        // Note: In v1, we append binding data to existing override items to allow hybrids.
         obj.listItems = [...(obj.listItems || []), ...dataItems];
         
         // Ensure list template exists
@@ -44,15 +43,12 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, setRe
 
     // 2. Preset Lookup & Cloning (No-bleed)
     const preset = PRESET_REGISTRY[section.presentationKey];
-    // Deep clone config to serve as the root object template
     const baseConfig = JSON.parse(JSON.stringify(preset.config)) as ConfigState;
 
     // 3. Apply Overrides (Phase C2)
-    // We merge the preset config with the section overrides to get the effective config
     const effectiveConfig = applyOverrides(baseConfig, section.overrides || {});
 
     // 4. Object Synthesis
-    // Create the root object from the effective config
     const rootObj: SceneObject = {
         ...effectiveConfig,
         id: `synth-${section.id}-root`,
@@ -68,17 +64,16 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, setRe
     }
     
     // 5. Data Injection (Phase D1)
-    // Traverse the synthesized object tree and populate lists with binding data
     injectBindingData(rootObj, section.binding);
 
     const objects = [rootObj];
     
     // 6. Dimension Resolution
-    // Use helper to resolve layout height/pinHeight (it respects overrides internally)
     const { height, pinHeight } = resolveSectionDimensions(section, PRESET_REGISTRY);
 
     // 7. Extract Config for Frame
     const clip = rootObj.clipWithinSection ?? true;
+    const className = rootObj.className || "bg-white"; // Default background
 
     // 8. Render via SectionFrame (Phase L1)
     return (
@@ -89,12 +84,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, setRe
             objects={objects}
             setRef={setRef}
             clip={clip}
-            className={
-                // Legacy Background Handling (Temporary Migration Phase G2)
-                section.id.includes('use-case') ? "bg-white rounded-t-3xl md:rounded-t-[4rem]" : 
-                section.id.includes('cta') ? "bg-black" : 
-                section.id.includes('solution') ? "bg-neutral-50" : "bg-white"
-            }
+            className={className}
         />
     );
 };

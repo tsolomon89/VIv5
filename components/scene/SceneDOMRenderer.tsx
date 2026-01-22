@@ -3,6 +3,8 @@ import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { SceneObject, NumberParam, LeadingPlacement, LeadingKind, ConfigState } from '../../types';
 import { getIcon } from '../../utils/iconRegistry';
 import { trackRaf } from '../../utils/performance';
+import { useVisibility } from '../../hooks/useVisibility';
+import { isDOMShape } from '../../utils/shapes';
 
 // Helper to interpolate scroll-linked params with Default Value support
 const getVal = (param: NumberParam | undefined, scrollProgress: number, def: number = 0) => {
@@ -320,26 +322,16 @@ const ListRenderer = ({ obj, scrollProgress }: DOMItemProps) => {
     const z = getVal(obj.offsetZ, scrollProgress, 0);
     const opacity = getVal(obj.opacity, scrollProgress, 1);
     
-    // --- HOOKS (Must be unconditional) ---
+    // --- HOOKS ---
     const containerRef = useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(false);
+    const isVisible = useVisibility({ 
+        ref: containerRef, 
+        rootMargin: '200px 0px 200px 0px' 
+    });
     
-    // Marquee-specific hooks (executed always)
+    // Marquee-specific hooks
     const trackRef = useRef<HTMLDivElement>(null);
     const marqueeState = useRef({ offset: 0, contentWidth: 0 });
-
-    // Offscreen Culling Logic (Controls animation only)
-    useEffect(() => {
-        if (!containerRef.current) return;
-        
-        const obs = new IntersectionObserver((entries) => {
-            const entry = entries[0];
-            setIsVisible(entry.isIntersecting);
-        }, { rootMargin: '200px 0px 200px 0px' });
-        
-        obs.observe(containerRef.current);
-        return () => obs.disconnect();
-    }, []);
 
     // --- Prepare Items ---
     let displayItems = overrides;
@@ -536,9 +528,9 @@ const DOMItem = (props: DOMItemProps) => {
 
 // --- Root Renderer ---
 export const SceneDOMRenderer = ({ objects, scrollProgress }: { objects: SceneObject[], scrollProgress: number }) => {
-    // Only render DOM-capable shapes (Added group)
+    // Only render DOM-capable shapes
     const validObjects = useMemo(() => 
-        objects.filter(o => ['tile', 'card', 'text', 'list', 'group'].includes(o.shape)), 
+        objects.filter(o => isDOMShape(o.shape)), 
     [objects]);
 
     return (

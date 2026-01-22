@@ -21,7 +21,7 @@ interface SectionFrameProps {
  * - Document flow height
  * - Sticky/Pinning behavior
  * - Local coordinate system
- * - Visibility culling wrapper
+ * - Visibility culling wrapper (with overscan)
  * - Section-local progress calculation (Phase I2)
  */
 export const SectionFrame: React.FC<SectionFrameProps> = ({ 
@@ -29,8 +29,7 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({
 }) => {
     const localRef = useRef<HTMLDivElement>(null);
     
-    // Phase I3: Visibility culling + generous overscan to prevent pop-in
-    // We only attach scroll listeners and render WebGL when close to viewport
+    // Phase I3: Visibility culling + generous overscan (500px) to prevent pop-in
     const isVisible = useVisibility({ ref: localRef, rootMargin: '500px' }); 
     
     const [progress, setProgress] = useState(0);
@@ -51,10 +50,8 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({
             const distance = height - pinHeight;
             
             // Guard: If section isn't taller than its pin window (e.g. standard Hero),
-            // we default to 0 or 1 based on position, or standard scroll mapping if needed.
+            // we default to 0 or 1 based on position.
             if (distance < 1) {
-                // If it's above viewport, it's done (1). If below or in, it's start (0).
-                // This prevents division by zero.
                 setProgress(rect.top > 0 ? 0 : 1);
                 return;
             }
@@ -65,6 +62,7 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({
             setProgress(raw);
         };
 
+        // Performance: Only attach scroll listener if we are close to viewport
         if (isVisible) {
             window.addEventListener('scroll', handleScroll, { passive: true });
             handleScroll(); // Initial calculation
@@ -74,8 +72,6 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({
     }, [isVisible, height, pinHeight]);
 
     // Clamp progress for rendering scene (safety against out-of-bounds inputs)
-    // We compute raw progress above (which can be <0 or >1 for other effects), 
-    // but the Scene expects 0-1 for interpolation.
     const clampedProgress = Math.max(0, Math.min(1, progress));
 
     return (

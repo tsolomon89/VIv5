@@ -45,6 +45,7 @@ export const DEFAULT_CONFIG: ConfigState = {
   children: [],
   renderPolicy: { virtualization: 'window', overscanPx: 100 },
   pinHeight: 800,
+  className: "bg-white",
   
   // Prism Defaults
   height: mkParam(1),
@@ -203,7 +204,10 @@ export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
             placement: { slot: 'start' },
             binding: { kind: 'self' },
             presentationKey: 'self.hero.v1',
-            overrides: { height: { value: 1500, endValue: null, isLinked: false } } // Override height from preset if needed
+            overrides: { 
+                height: { value: 1500, endValue: null, isLinked: false },
+                className: "bg-[#1A1A1B]" // Default dark
+            } 
         },
         {
             schemaVersion: 1,
@@ -211,7 +215,10 @@ export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
             placement: { slot: 'free', order: 1 },
             binding: { kind: 'related', target: 'useCase', cardinality: 'many' }, 
             presentationKey: 'related.useCase.many.grid.v1',
-            overrides: { height: { value: 1600, endValue: null, isLinked: false } }
+            overrides: { 
+                height: { value: 1600, endValue: null, isLinked: false },
+                className: "bg-white rounded-t-3xl md:rounded-t-[4rem]" // Migration of hardcoded style
+            }
         },
         {
             schemaVersion: 1,
@@ -221,6 +228,7 @@ export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
             presentationKey: 'related.product.many.marquee.v1',
             overrides: { 
                 height: { value: 1200, endValue: null, isLinked: false },
+                className: "bg-white",
                 // Inject specific images for marquee via listItems overrides
                 listItems: sliderImages.map(src => ({ textureUrl: src }))
             } 
@@ -231,7 +239,10 @@ export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
             placement: { slot: 'free', order: 3 },
             binding: { kind: 'related', target: 'feature', cardinality: 'many' },
             presentationKey: 'related.feature.many.grid.v1',
-            overrides: { height: { value: 1400, endValue: null, isLinked: false } } 
+            overrides: { 
+                height: { value: 1400, endValue: null, isLinked: false },
+                className: "bg-white"
+            } 
         },
         {
             schemaVersion: 1,
@@ -239,7 +250,10 @@ export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
             placement: { slot: 'free', order: 4 },
             binding: { kind: 'related', target: 'solution', cardinality: 'many' },
             presentationKey: 'related.solution.many.grid.v1',
-            overrides: { height: { value: 1200, endValue: null, isLinked: false } } 
+            overrides: { 
+                height: { value: 1200, endValue: null, isLinked: false },
+                className: "bg-neutral-50" // Migration of hardcoded style
+            } 
         },
         {
             schemaVersion: 1,
@@ -247,7 +261,10 @@ export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
             placement: { slot: 'end' },
             binding: { kind: 'self' },
             presentationKey: 'self.cta.v1',
-            overrides: { height: { value: 800, endValue: null, isLinked: false } } 
+            overrides: { 
+                height: { value: 800, endValue: null, isLinked: false },
+                className: "bg-black" // Migration of hardcoded style
+            } 
         }
     ]
 };
@@ -267,7 +284,10 @@ export const MINIMAL_PAGE_TEMPLATE: PageTemplate = {
             placement: { slot: 'start' },
             binding: { kind: 'self' },
             presentationKey: 'self.hero.v1',
-            overrides: { height: { value: 1500, endValue: null, isLinked: false } } 
+            overrides: { 
+                height: { value: 1500, endValue: null, isLinked: false },
+                className: "bg-[#1A1A1B]"
+            } 
         },
         {
             schemaVersion: 1,
@@ -275,7 +295,10 @@ export const MINIMAL_PAGE_TEMPLATE: PageTemplate = {
             placement: { slot: 'end' },
             binding: { kind: 'self' },
             presentationKey: 'self.cta.v1', 
-            overrides: { height: { value: 800, endValue: null, isLinked: false } } 
+            overrides: { 
+                height: { value: 800, endValue: null, isLinked: false },
+                className: "bg-black"
+            } 
         }
     ]
 };

@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings2, ChevronDown, ChevronUp, Layers, MoveVertical, Box, Triangle, Circle, Square, Type, CloudLightning, Cloud, Trash2, Copy, PanelTop, Plus, Info, X, Pin } from 'lucide-react';
+import { Settings2, ChevronDown, ChevronUp, Layers, MoveVertical, Box, Triangle, Circle, Square, Type, CloudLightning, Cloud, Trash2, Copy, PanelTop, Plus, Info, X, Pin, List, CreditCard } from 'lucide-react';
 import { FpsTracker } from '../FpsTracker';
 import { ConfigControls, AddButton, SectionHeader } from './ConfigControls';
 import { BindingControls } from './BindingControls';
@@ -301,7 +301,9 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
                                                 <AddButton icon={<Box className="w-4 h-4" />} label="Cube" onClick={() => addSceneObject(activeSectionId, 'cube')} />
                                                 <AddButton icon={<Circle className="w-4 h-4" />} label="Sphere" onClick={() => addSceneObject(activeSectionId, 'sphere')} />
                                                 <AddButton icon={<Square className="w-4 h-4" />} label="Plane" onClick={() => addSceneObject(activeSectionId, 'plane')} />
-                                                <AddButton icon={<Type className="w-4 h-4" />} label="Text" onClick={() => addSceneObject(activeSectionId, 'text')} />
+                                                <AddButton icon={<Type className="w-4 h-4" />} label="Tile" onClick={() => addSceneObject(activeSectionId, 'text')} />
+                                                <AddButton icon={<CreditCard className="w-4 h-4" />} label="Card" onClick={() => addSceneObject(activeSectionId, 'card')} />
+                                                <AddButton icon={<List className="w-4 h-4" />} label="List" onClick={() => addSceneObject(activeSectionId, 'list')} />
                                                 <AddButton icon={<CloudLightning className="w-4 h-4" />} label="Lightning" onClick={() => addSceneObject(activeSectionId, 'lightning')} />
                                                 <AddButton icon={<Cloud className="w-4 h-4" />} label="Atmos" onClick={() => addSceneObject(activeSectionId, 'atmosphere')} />
                                             </div>
