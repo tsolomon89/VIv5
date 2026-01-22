@@ -9,7 +9,6 @@ import { resolveBindingData, resolveSectionDimensions } from '../../utils/resolu
 
 interface SectionRendererProps {
     section: SectionInstance;
-    progress: number;
     setRef: (el: HTMLElement | null) => void;
 }
 
@@ -34,7 +33,7 @@ const injectBindingData = (obj: SceneObject, binding: Binding) => {
     }
 };
 
-export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, progress, setRef }) => {
+export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, setRef }) => {
     // 1. Validation
     const errors = useMemo(() => validateSection(section, PRESET_REGISTRY), [section]);
     
@@ -80,15 +79,19 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, progr
     // 5. Dimension Resolution
     const { height, pinHeight } = resolveSectionDimensions(section, PRESET_REGISTRY);
 
-    // 6. Render via SectionFrame (Phase L1)
+    // 6. Extract Config for Frame
+    // Respect the configuration for clipping (defaults to true in data.ts)
+    const clip = rootObj.clipWithinSection ?? true;
+
+    // 7. Render via SectionFrame (Phase L1)
     return (
         <SectionFrame
             id={section.id}
             height={height}
             pinHeight={pinHeight}
             objects={objects}
-            progress={progress}
             setRef={setRef}
+            clip={clip}
             className={
                 // Legacy Background Handling (Temporary Migration Phase G2)
                 section.id.includes('use-case') ? "bg-white rounded-t-3xl md:rounded-t-[4rem]" : 

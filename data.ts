@@ -170,7 +170,7 @@ export const DEFAULT_CONFIG: ConfigState = {
   bufferPx: mkParam(100),
   containerOverflow: 'visible',
   itemOverflow: 'visible',
-  clipWithinSection: false
+  clipWithinSection: true
 };
 
 export const createObj = (overrides: Partial<SceneObject>): SceneObject => {

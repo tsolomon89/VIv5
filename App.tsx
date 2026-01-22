@@ -63,7 +63,8 @@ export default function App() {
       }
   }, [template.sections, activeSectionId]);
 
-  // --- Scroll Logic ---
+  // --- Scroll Logic (Maintained for Editor UI Visualization) ---
+  // Note: Actual Rendering progress is now handled internally by SectionFrame.
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
@@ -72,34 +73,31 @@ export default function App() {
 
       template.sections.forEach(section => {
           const key = section.id;
-          
           // Accurate v1 scroll math using presets
           const { height, pinHeight } = resolveSectionDimensions(section, PRESET_REGISTRY);
 
-          if (section.placement.slot === 'start') {
-              // Standard Scroll for Hero
-              newProgress[key] = Math.min(1, Math.max(0, scrollY / (height || 1)));
-          } else {
-              // Sticky Scroll for others
-              const el = sectionRefs.current[key];
-              if (el) {
-                  const rect = el.getBoundingClientRect();
-                  const trackHeight = height;
-                  // Use configured pinHeight or fallback to viewport height
-                  const effectivePinHeight = pinHeight || vH; 
-                  
-                  const scrollDistance = Math.max(1, trackHeight - effectivePinHeight);
-                  const scrolledPastStart = -rect.top;
-                  newProgress[key] = scrolledPastStart / scrollDistance;
-              }
+          // Editor Logic: Approximate progress for the sidebar UI
+          const el = sectionRefs.current[key];
+          if (el) {
+              const rect = el.getBoundingClientRect();
+              const trackHeight = height;
+              const effectivePinHeight = pinHeight || vH; 
+              
+              const scrollDistance = Math.max(1, trackHeight - effectivePinHeight);
+              const scrolledPastStart = -rect.top;
+              newProgress[key] = scrolledPastStart / scrollDistance;
           }
       });
       setSectionProgress(newProgress);
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); 
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [template]); 
+    
+    // Only run this high-frequency loop if debug mode is active
+    if (isDebugMode) {
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll(); 
+        return () => window.removeEventListener('scroll', handleScroll);
+    }
+  }, [template, isDebugMode]); 
 
   const handleCopyConfig = async () => {
     try {
@@ -152,7 +150,6 @@ export default function App() {
          <div className="relative z-20 shadow-[0_-50px_100px_rgba(0,0,0,0.5)]">
             <PageRenderer 
                 template={template} 
-                sectionProgress={sectionProgress} 
                 setSectionRef={setSectionRef}
             />
          </div>

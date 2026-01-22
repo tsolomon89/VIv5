@@ -5,11 +5,10 @@ import { SectionRenderer } from './SectionRenderer';
 
 interface PageRendererProps {
     template: PageTemplate;
-    sectionProgress: Record<string, number>;
     setSectionRef: (id: string, el: HTMLElement | null) => void;
 }
 
-export const PageRenderer: React.FC<PageRendererProps> = ({ template, sectionProgress, setSectionRef }) => {
+export const PageRenderer: React.FC<PageRendererProps> = ({ template, setSectionRef }) => {
     
     // Sort Sections based on Placement Slot and Order
     const sortedSections = useMemo(() => {
@@ -40,7 +39,6 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ template, sectionPro
                 <SectionRenderer 
                     key={section.id}
                     section={section}
-                    progress={sectionProgress[section.id] || 0}
                     setRef={(el) => setSectionRef(section.id, el)}
                 />
             ))}
