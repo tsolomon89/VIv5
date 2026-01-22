@@ -129,7 +129,7 @@ export const productMarqueePreset: PresentationPreset = {
         listLayout: 'marquee',
         listSpeed: mkParam(2.8), 
         listDirection: mkParam(-1.0),
-        listGap: mkParam(32),
+        listGap: mkParam(48),
         clipWithinSection: true,
         offsetY: mkParam(0),
         marqueeHoverPause: true, 
@@ -144,9 +144,9 @@ export const productMarqueePreset: PresentationPreset = {
             cardWidth: mkParam(400),
             cardHeight: mkParam(560),
             cardBackground: '#ffffff',
-            cardElevation: mkParam(0),
+            cardElevation: mkParam(2),
             sizingMode: 'cover',
-            cardRadius: '0px'
+            cardRadius: '24px'
         },
     }
 };
@@ -162,7 +162,7 @@ export const featureGridPreset: PresentationPreset = {
         children: [
             base({
                 shape: 'tile',
-                offsetY: mkParam(-400),
+                offsetY: mkParam(-500), // Moved up to prevent overlap
                 offsetX: mkParam(-200), // Left align roughly
                 tileAlign: 'left',
                 tileHeading: 'Latest Projects.',
@@ -175,16 +175,16 @@ export const featureGridPreset: PresentationPreset = {
                 shape: 'list',
                 listLayout: 'grid',
                 listColumns: mkParam(2),
-                listGap: mkParam(48), // gap-12
+                listGap: mkParam(64), // Increased gap
                 listCount: mkParam(4),
-                offsetY: mkParam(100),
+                offsetY: mkParam(200), // Moved down to prevent overlap
                 renderPolicy: { virtualization: 'none', overscanPx: 100 },
                 listTemplate: {
                     shape: 'card',
                     cardWidth: mkParam(500),
                     cardHeight: mkParam(450), // Aspect 4/3 ish
                     cardBackground: '#f5f5f5', // neutral-100
-                    cardRadius: '4px',
+                    cardRadius: '12px',
                     tileTag: 'h3',
                     headingSize: mkParam(24),
                     headingColor: '#000000',
@@ -211,7 +211,7 @@ export const solutionGridPreset: PresentationPreset = {
         children: [
             base({
                 shape: 'tile',
-                offsetY: mkParam(-400),
+                offsetY: mkParam(-450), // Moved up
                 tileAlign: 'left',
                 tileLabel: '/ SERVICES',
                 labelColor: '#a3a3a3', // neutral-400
@@ -226,18 +226,18 @@ export const solutionGridPreset: PresentationPreset = {
                 shape: 'list',
                 listLayout: 'grid',
                 listColumns: mkParam(3),
-                listGap: mkParam(32),
-                offsetY: mkParam(100),
+                listGap: mkParam(40),
+                offsetY: mkParam(250), // Moved down for breathing room
                 renderPolicy: { virtualization: 'none', overscanPx: 100 },
                 listTemplate: {
                     shape: 'card',
-                    cardWidth: mkParam(350),
-                    cardHeight: mkParam(350),
+                    cardWidth: mkParam(340),
+                    cardHeight: mkParam(320),
                     cardBackground: '#ffffff',
                     cardBorder: '1px solid rgba(0,0,0,0.05)',
-                    cardRadius: '16px',
+                    cardRadius: '24px',
                     cardPadding: mkParam(32),
-                    cardElevation: mkParam(1),
+                    cardElevation: mkParam(2),
                     leadingPlacement: 'above',
                     leadingKind: 'icon',
                     leadingSize: mkParam(48),
@@ -284,14 +284,15 @@ export const ctaPreset: PresentationPreset = {
                 tileHeading: 'Ready to start?',
                 headingSize: mkParam(80), headingColor: '#ffffff',
                 tileSubtitle: "Let's build something extraordinary together. Reach out to discuss your next project.",
-                subColor: 'rgba(255,255,255,0.6)', subSize: mkParam(20)
+                subColor: 'rgba(255,255,255,0.6)', subSize: mkParam(20),
+                offsetY: mkParam(-50) // Shifted up
             }),
             base({
                 shape: 'card',
-                cardWidth: mkParam(200), cardHeight: mkParam(60),
-                cardBackground: '#ffffff', cardRadius: '30px',
-                offsetY: mkParam(200),
-                tileHeading: 'Get in touch', headingColor: '#000000', headingSize: mkParam(18),
+                cardWidth: mkParam(240), cardHeight: mkParam(70),
+                cardBackground: '#ffffff', cardRadius: '35px',
+                offsetY: mkParam(300), // Shifted down
+                tileHeading: 'Get in touch', headingColor: '#000000', headingSize: mkParam(20),
                 tileAlign: 'center'
             })
         ]
