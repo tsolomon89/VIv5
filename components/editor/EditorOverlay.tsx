@@ -1,14 +1,14 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings2, ChevronDown, ChevronUp, Layers, MoveVertical, Box, Triangle, Circle, Square, Type, CloudLightning, Cloud, Trash2, Copy, PanelTop, Plus, Info, X, Pin, List, CreditCard } from 'lucide-react';
+import { Settings2, ChevronDown, ChevronUp, Layers, MoveVertical, Box, Triangle, Circle, Square, Type, CreditCard, CloudLightning, Cloud, Trash2, Copy, PanelTop, Plus, Info, X, Pin, List } from 'lucide-react';
 import { FpsTracker } from '../FpsTracker';
 import { ConfigControls, AddButton, SectionHeader } from './ConfigControls';
 import { BindingControls } from './BindingControls';
 import { PlacementControls } from './PlacementControls';
 import { PresentationControls } from './PresentationControls';
-import { ConfigState, SceneObject, ShapeType, SectionConfig, PageTemplate, Binding, Placement } from '../../types';
-import { getSectionLabel } from '../../utils/resolution';
+import { ConfigState, SceneObject, ShapeType, PageTemplate, Binding, Placement } from '../../types';
+import { getSectionLabel, resolveBindingData, injectBindingData } from '../../utils/resolution';
 import { PRESET_REGISTRY } from '../../presets/registry';
 
 interface EditorOverlayProps {
@@ -115,14 +115,21 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
     const currentSectionInstance = template.sections.find(s => s.id === activeSectionId);
     
     // 2. Compute Effective Config (Preset + Overrides) for Display
+    // NOW WITH DATA INJECTION: We hydrate the config so the editor shows what the user sees.
     const { effectiveConfig, activeObjects, sectionHeight, sectionPinHeight, sectionClassName } = useMemo(() => {
         if (!currentSectionInstance) return { effectiveConfig: null, activeObjects: [], sectionHeight: 1000, sectionPinHeight: 800, sectionClassName: '' };
         
         const preset = PRESET_REGISTRY[currentSectionInstance.presentationKey];
         const base = preset ? JSON.parse(JSON.stringify(preset.config)) : {};
         
-        // Merge overrides
+        // Merge overrides (Shallow merge of children)
         const merged = { ...base, ...(currentSectionInstance.overrides || {}) };
+        
+        // HYDRATE WITH DATA: Replicate SectionRenderer logic for WYSIWYG
+        const resolvedData = resolveBindingData(currentSectionInstance.binding);
+        // We inject into 'merged' directly. Since 'merged' is a new object derived from base/overrides, it's safe to mutate for display.
+        // We pass 'base' as original to ensure we respect overrides (only inject into untouched fields)
+        injectBindingData(merged, currentSectionInstance.binding, resolvedData, base);
         
         return {
             effectiveConfig: merged,
@@ -147,7 +154,7 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
         </AnimatePresence>
 
         {/* --- PART 1: TOP STATS & HEADER (Pinned) --- */}
-        <div className="flex flex-col border-b border-white/5 bg-white/5 shrink-0 pt-20"> {/* pt-20 to clear absolute header */}
+        <div className="flex flex-col border-b border-white/5 bg-white/5 shrink-0 pt-20"> 
             
             {/* FPS & Global Stats */}
             <div className="px-6 py-3 border-b border-white/5 flex items-center justify-between">

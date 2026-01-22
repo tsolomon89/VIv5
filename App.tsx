@@ -177,23 +177,6 @@ export default function App() {
           )}
       </AnimatePresence>
 
-      <Header 
-        isNavOpen={isNavOpen} 
-        setIsNavOpen={setIsNavOpen} 
-        hasUnlockedDebug={hasUnlockedDebug} 
-        isDebugMode={isDebugMode} 
-        setIsDebugMode={setIsDebugMode} 
-        onCopyConfig={handleCopyConfig} 
-        onImportConfig={handleImportConfig}
-        onLoadTemplate={loadTemplate}
-        onCreatePage={createBlankPage}
-        copySuccess={copySuccess} 
-        isSidebarOpen={isSidebarOpen}
-        setIsSidebarOpen={setIsSidebarOpen}
-      />
-      
-      <Navigation isOpen={isNavOpen} />
-      
       {/* App Shell wraps the content and sidebar */}
       <PreviewContext.Provider value={{ scrollContainer }}>
           <AppShell 
@@ -201,6 +184,23 @@ export default function App() {
             sidebarContent={sidebarContent}
             setScrollContainer={setScrollContainer}
           >
+            <Header 
+              isNavOpen={isNavOpen} 
+              setIsNavOpen={setIsNavOpen} 
+              hasUnlockedDebug={hasUnlockedDebug} 
+              isDebugMode={isDebugMode} 
+              setIsDebugMode={setIsDebugMode} 
+              onCopyConfig={handleCopyConfig} 
+              onImportConfig={handleImportConfig}
+              onLoadTemplate={loadTemplate}
+              onCreatePage={createBlankPage}
+              copySuccess={copySuccess} 
+              isSidebarOpen={isSidebarOpen}
+              setIsSidebarOpen={setIsSidebarOpen}
+            />
+            
+            <Navigation isOpen={isNavOpen} />
+
             <main className="relative w-full">
                 <div className="relative z-20 shadow-[0_-50px_100px_rgba(0,0,0,0.5)]">
                     <PageRenderer 

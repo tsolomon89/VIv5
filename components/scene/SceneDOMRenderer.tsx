@@ -519,7 +519,7 @@ const ListRenderer = ({ obj, scrollProgress }: DOMItemProps) => {
 };
 
 // --- Main Router ---
-const DOMItem = (props: DOMItemProps) => {
+const DOMItem: React.FC<DOMItemProps> = (props) => {
     if (props.obj.shape === 'list') {
         return <ListRenderer {...props} />;
     }

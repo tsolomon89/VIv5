@@ -228,9 +228,8 @@ export const INITIAL_PAGE_TEMPLATE: PageTemplate = {
             presentationKey: 'related.product.many.marquee.v1',
             overrides: { 
                 height: { value: 2400, endValue: null, isLinked: false }, // Increased height
-                className: "bg-white",
-                // Inject specific images for marquee via listItems overrides
-                listItems: sliderImages.map(src => ({ textureUrl: src }))
+                className: "bg-white"
+                // No listItems overrides! Content comes from binding.
             } 
         },
         {

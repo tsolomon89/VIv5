@@ -1,6 +1,6 @@
 
-import { Binding, SceneObject, SectionConfig, SectionInstance, PresetRegistry } from '../types';
-import { projects } from '../data';
+import { Binding, SceneObject, SectionConfig, SectionInstance, PresetRegistry, ConfigState } from '../types';
+import { projects, sliderImages } from '../data';
 
 // Stub resolver to bridge the new data model with existing static data
 export interface ResolvedData {
@@ -70,8 +70,18 @@ export const resolveBindingData = (binding: Binding): any[] => {
     if (binding.kind === 'related') {
         let rawData: any[] = [];
 
-        if (binding.target === 'product' || binding.target === 'feature') {
-            // Return projects mock
+        if (binding.target === 'product') {
+            // Use sliderImages for product/marquee demos
+            rawData = sliderImages.map((src, i) => ({
+                id: `prod-${i}`,
+                textureUrl: src,
+                // Basic metadata
+                tileHeading: `Product ${i + 1}`,
+                tileSubtitle: 'Collection 2024',
+                category: 'Product'
+            }));
+        } else if (binding.target === 'feature') {
+            // Use projects mock for features/grid
             rawData = projects.map((p, i) => ({
                 id: `item-${i}`,
                 tileHeading: p.title,
@@ -126,6 +136,69 @@ export const resolveBindingData = (binding: Binding): any[] => {
     }
 
     return [];
+};
+
+// Recursive helper to inject resolved binding data into a scene config
+export const injectBindingData = (obj: any, binding: Binding, dataItems: any[], original?: any) => {
+    const primaryItem = dataItems[0];
+
+    // 1. List Injection (Collection Mode)
+    if (obj.shape === 'list') {
+        // Strict Override Check: Only inject if listItems is reference-equal to original (Preset)
+        // If the user supplied overrides, applyOverrides() would have replaced the array, changing reference.
+        // If original is undefined (newly created object), we assume it's clean and safe to inject.
+        const isUntouched = !original || (obj.listItems === original.listItems);
+        
+        if (isUntouched && dataItems.length > 0) {
+            obj.listItems = dataItems;
+            
+            // Ensure list template exists
+            if (!obj.listTemplate) {
+                obj.listTemplate = { shape: 'card' };
+            }
+        }
+    }
+    // 2. Single Item Injection (Hero/Detail Mode)
+    // We only inject if the current value matches the Preset Default
+    else if ((obj.shape === 'tile' || obj.shape === 'card') && primaryItem) {
+        
+        const tryInject = (key: string, dataKey: string, fallbackDataKey?: string) => {
+            const current = obj[key];
+            const defaultVal = original ? original[key] : undefined;
+            
+            // If current value is essentially "untouched" (equals default, or empty/undefined)
+            // AND we have data for it, we inject.
+            if (current === defaultVal || current === undefined || current === '') {
+                const val = primaryItem[dataKey] || (fallbackDataKey ? primaryItem[fallbackDataKey] : undefined);
+                if (val) obj[key] = val;
+            }
+        };
+
+        tryInject('tileHeading', 'tileHeading');
+        tryInject('tileSubtitle', 'tileSubtitle', 'description');
+        tryInject('tileLabel', 'tileLabel');
+        tryInject('tileTrailing', 'tileTrailing');
+        
+        // Media Injection (Texture/Image)
+        if (obj.textureUrl === (original?.textureUrl) || !obj.textureUrl) {
+            if (primaryItem.textureUrl) obj.textureUrl = primaryItem.textureUrl;
+            else if (primaryItem.image) obj.textureUrl = primaryItem.image;
+        }
+        
+        // Leading Icon
+        if (obj.leadingIcon === (original?.leadingIcon) || !obj.leadingIcon) {
+             if (primaryItem.leadingIcon) obj.leadingIcon = primaryItem.leadingIcon;
+        }
+    }
+    
+    // Recurse children
+    if (obj.children) {
+        obj.children.forEach((child: any) => {
+            // Attempt to find matching original child for comparison
+            const originalChild = original?.children?.find((c: any) => c.id === child.id);
+            injectBindingData(child, binding, dataItems, originalChild);
+        });
+    }
 };
 
 export const getSectionLabel = (section: SectionInstance): string => {

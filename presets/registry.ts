@@ -125,29 +125,34 @@ export const productMarqueePreset: PresentationPreset = {
     config: {
         ...DEFAULT_CONFIG,
         className: "bg-white",
-        shape: 'list',
-        listLayout: 'marquee',
-        listSpeed: mkParam(2.8), 
-        listDirection: mkParam(-1.0),
-        listGap: mkParam(80), // Increased gap
-        clipWithinSection: true,
-        offsetY: mkParam(0),
-        marqueeHoverPause: true, 
-        itemHoverScale: mkParam(1.05),
-        itemBaseGrayscale: mkParam(1.0),
-        itemHoverGrayscale: mkParam(0.0),
-        listSmoothness: mkParam(0.1),
-        listRadiusPattern: '100px 0 0 0 | 0 100px 0 40px | 40px',
-        renderPolicy: { virtualization: 'window', overscanPx: 500, maxItems: 20, renderer: 'webgl' },
-        listTemplate: {
-            shape: 'card',
-            cardWidth: mkParam(400),
-            cardHeight: mkParam(560),
-            cardBackground: '#ffffff',
-            cardElevation: mkParam(2),
-            sizingMode: 'cover',
-            cardRadius: '32px' // Softer radius
-        },
+        shape: 'group', // Wrap in group to ensure editor visibility
+        children: [
+            base({
+                shape: 'list',
+                listLayout: 'marquee',
+                listSpeed: mkParam(2.8), 
+                listDirection: mkParam(-1.0),
+                listGap: mkParam(80), // Increased gap
+                clipWithinSection: true,
+                offsetY: mkParam(0),
+                marqueeHoverPause: true, 
+                itemHoverScale: mkParam(1.05),
+                itemBaseGrayscale: mkParam(1.0),
+                itemHoverGrayscale: mkParam(0.0),
+                listSmoothness: mkParam(0.1),
+                listRadiusPattern: '100px 0 0 0 | 0 100px 0 40px | 40px',
+                renderPolicy: { virtualization: 'window', overscanPx: 500, maxItems: 20, renderer: 'webgl' },
+                listTemplate: {
+                    shape: 'card',
+                    cardWidth: mkParam(400),
+                    cardHeight: mkParam(560),
+                    cardBackground: '#ffffff',
+                    cardElevation: mkParam(2),
+                    sizingMode: 'cover',
+                    cardRadius: '32px' // Softer radius
+                },
+            })
+        ]
     }
 };
 
@@ -302,7 +307,17 @@ export const ctaPreset: PresentationPreset = {
 export const genericSectionPreset: PresentationPreset = {
     key: 'section.generic.v1',
     signature: { kind: 'self' },
-    config: { ...DEFAULT_CONFIG }
+    config: {
+        ...DEFAULT_CONFIG,
+        shape: 'group',
+        children: [
+            base({
+                shape: 'tetrahedron',
+                scale: mkParam(150),
+                animationType: 'rotate'
+            })
+        ]
+    }
 };
 
 export const PRESET_REGISTRY: PresetRegistry = {

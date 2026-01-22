@@ -6,7 +6,7 @@ import { validatePageTemplate } from '../utils/validation';
 import { PRESET_REGISTRY } from '../presets/registry';
 import { matchesSignature } from '../utils/binding';
 
-const STORAGE_KEY = 'vi_page_template_v1';
+const STORAGE_KEY = 'vi_page_template_v1_1'; // Bumped for data model change
 
 export const useTemplateManager = () => {
     // Initialize from LocalStorage or Fallback

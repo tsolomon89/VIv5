@@ -45,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
     }, [isDebugMode]);
 
     return (
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-start justify-between px-6 py-6 mix-blend-difference text-white pointer-events-none">
+      <header className="absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-6 py-6 mix-blend-difference text-white pointer-events-none">
         <div className="text-2xl font-bold tracking-tighter pointer-events-auto cursor-pointer z-50 relative py-2">vi</div>
         <div className="flex flex-col items-end gap-4 pointer-events-auto relative z-50">
             <button onClick={() => setIsNavOpen(!isNavOpen)} className="p-2 -mr-2 hover:opacity-70 transition-opacity cursor-pointer">
